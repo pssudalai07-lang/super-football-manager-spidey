@@ -1,0 +1,10 @@
+{
+  "appId": "com.spidey.superfootballmanager",
+  "appName": "Super Football Manager by Spidey",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": true,
+    "backgroundColor": "#0b132b"
+  }
+}
