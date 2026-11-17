@@ -1,6 +1,6 @@
 /**
- * SUPER FOOTBALL MANAGER BY SPIDEY (v3.0)
- * Controller: Dual Modes + All-Player Match Ratings + Golden Boot + Ballon d'Or + World Rankings + Trophy Celebrations
+ * SUPER FOOTBALL MANAGER BY SPIDEY (v4.0)
+ * Broadcast UI Controller + Web Audio Stadium SFX + Visual Tactics Pitch + Full Custom Editor Studio
  */
 
 (async function () {
@@ -9,6 +9,7 @@
   let activeTabIdx = 0;
   let selectedFocus = 'balanced';
   let selectedSwapId = null;
+  let sfxEnabled = true;
 
   let isSimulating = false;
   let isPausedForDecision = false;
@@ -16,19 +17,100 @@
   let currentMatchContext = null;
   let lastFinishedMatch = null;
   let ratingViewSide = 'home';
+  let uploadedClubLogoDataUrl = null;
+
+  // ==================== WEB AUDIO STADIUM SFX ENGINE ====================
+  const SoundFX = (() => {
+    let ctx = null;
+    function getCtx() {
+      if (!ctx) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) ctx = new AudioCtx();
+      }
+      if (ctx && ctx.state === 'suspended') ctx.resume();
+      return ctx;
+    }
+
+    function playWhistle() {
+      if (!sfxEnabled) return;
+      const c = getCtx();
+      if (!c) return;
+      const osc = c.createOscillator();
+      const gain = c.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(2850, c.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(2400, c.currentTime + 0.25);
+      gain.gain.setValueAtTime(0.12, c.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.3);
+      osc.connect(gain);
+      gain.connect(c.destination);
+      osc.start();
+      osc.stop(c.currentTime + 0.3);
+    }
+
+    function playGoalRoar() {
+      if (!sfxEnabled) return;
+      const c = getCtx();
+      if (!c) return;
+      const bufferSize = c.sampleRate * 0.9;
+      const buffer = c.createBuffer(1, bufferSize, c.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.sin((i / bufferSize) * Math.PI);
+      }
+      const noise = c.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = c.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.value = 650;
+
+      const gain = c.createGain();
+      gain.gain.setValueAtTime(0.28, c.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, c.currentTime + 0.9);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(c.destination);
+      noise.start();
+    }
+
+    function playFanfare() {
+      if (!sfxEnabled) return;
+      const c = getCtx();
+      if (!c) return;
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((freq, i) => {
+        const osc = c.createOscillator();
+        const gain = c.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, c.currentTime + i * 0.12);
+        gain.gain.setValueAtTime(0.08, c.currentTime + i * 0.12);
+        gain.gain.exponentialRampToValueAtTime(0.001, c.currentTime + i * 0.12 + 0.35);
+        osc.connect(gain);
+        gain.connect(c.destination);
+        osc.start(c.currentTime + i * 0.12);
+        osc.stop(c.currentTime + i * 0.12 + 0.36);
+      });
+    }
+
+    return { playWhistle, playGoalRoar, playFanfare };
+  })();
 
   const NAV_CONFIG = {
     manager: [
       { tabId: 'mgr-tab-hub', label: 'Club Hub', icon: '🏟️' },
-      { tabId: 'mgr-tab-squad', label: 'Squad & XI', icon: '📋' },
-      { tabId: 'mgr-tab-market', label: 'Transfers', icon: '💰' },
-      { tabId: 'mgr-tab-table', label: 'Awards', icon: '🏆' }
+      { tabId: 'mgr-tab-squad', label: 'Tactics', icon: '📋' },
+      { tabId: 'mgr-tab-market', label: 'Market', icon: '💰' },
+      { tabId: 'mgr-tab-table', label: 'Awards', icon: '🏆' },
+      { tabId: 'shared-tab-editor', label: 'Editor', icon: '🛠️' }
     ],
     player: [
       { tabId: 'plr-tab-home', label: 'My Pro', icon: '⚽' },
-      { tabId: 'plr-tab-training', label: 'Train & Traits', icon: '📈' },
-      { tabId: 'plr-tab-transfers', label: 'Offers & NT', icon: '✈️' },
-      { tabId: 'plr-tab-league', label: 'Awards', icon: '🏆' }
+      { tabId: 'plr-tab-training', label: 'Train', icon: '📈' },
+      { tabId: 'plr-tab-transfers', label: 'Offers', icon: '✈️' },
+      { tabId: 'plr-tab-league', label: 'Awards', icon: '🏆' },
+      { tabId: 'shared-tab-editor', label: 'Editor', icon: '🛠️' }
     ]
   };
 
@@ -44,6 +126,7 @@
     if (!state.pending_celebration) return;
     const cel = state.pending_celebration;
     state.pending_celebration = null;
+    SoundFX.playFanfare();
     document.getElementById('cel-icon').textContent = cel.icon || '🏆';
     document.getElementById('cel-title').textContent = cel.title;
     document.getElementById('cel-subtitle').textContent = cel.subtitle;
@@ -71,13 +154,16 @@
     activeTabIdx = idx;
     document.querySelectorAll('.nav-item').forEach((n) => n.classList.toggle('active', Number(n.dataset.idx) === idx));
 
-    const viewEl = document.getElementById(activeMode === 'manager' ? 'manager-view' : 'player-view');
-    viewEl.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
-
+    document.querySelectorAll('.tab-panel').forEach((p) => p.classList.remove('active'));
     const targetTabId = NAV_CONFIG[activeMode][idx].tabId;
     const panel = document.getElementById(targetTabId);
     if (panel) panel.classList.add('active');
-    renderAll();
+
+    if (targetTabId === 'shared-tab-editor') {
+      populateEditorDropdowns();
+    } else {
+      renderAll();
+    }
   }
 
   function setupBackButton() {
@@ -110,9 +196,8 @@
   }
 
   function renderSharedAwardsAndRankings(prefix, activeLeagueId) {
-    CareerEngine.ensureV3State(state);
+    CareerEngine.ensureV4State(state);
 
-    // 1. Golden Boot Live Race
     const scorers = Object.values(state.season_player_stats)
       .filter((s) => s.league_id === activeLeagueId || s.goals > 0)
       .sort((a, b) => b.goals - a.goals || b.assists - a.assists)
@@ -120,7 +205,7 @@
 
     const bootEl = document.getElementById(`${prefix}-boot-list`);
     if (scorers.length === 0) {
-      bootEl.innerHTML = '<div style="color:var(--text-muted);">Play matches to start the Golden Boot goal race!</div>';
+      bootEl.innerHTML = '<div style="color:var(--text-muted);">Play matches to start the Golden Boot race!</div>';
     } else {
       bootEl.innerHTML = scorers.map((s, i) => `
         <div class="list-row">
@@ -139,7 +224,6 @@
       </div>
     `).join('');
 
-    // 2. World Rankings (Clubs & Nations)
     const rankedClubs = [...state.clubs]
       .map((c) => {
         const lgTable = state.standings[c.league_id] || [];
@@ -152,7 +236,10 @@
 
     document.getElementById(`${prefix}-world-clubs`).innerHTML = rankedClubs.map((c, idx) => `
       <div class="list-row">
-        <div><strong>#${idx + 1} ${c.name}</strong> <span style="font-size:10px;color:var(--text-muted);">(${c.country})</span></div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${CareerEngine.renderClubCrestHTML(c, 26)}
+          <div><strong>#${idx + 1} ${c.name}</strong> <span style="font-size:10px;color:var(--text-muted);">(${c.country})</span></div>
+        </div>
         <span style="color:var(--accent-secondary);font-weight:800;">${c.worldPoints} pts</span>
       </div>
     `).join('');
@@ -167,7 +254,6 @@
       `).join('');
     document.getElementById(`${prefix}-world-nations`).innerHTML = rankedNations;
 
-    // 3. Ballon d'Or Contenders & Winners
     const bdoList = CareerEngine.computeBallonDorStandings(state).slice(0, 8);
     document.getElementById(`${prefix}-bdo-race`).innerHTML = bdoList.map((b, idx) => `
       <div class="list-row">
@@ -193,8 +279,10 @@
     const league = state.leagues.find((l) => l.league_id === club.league_id);
 
     document.getElementById('mgr-club-ovr').textContent = club.rating;
+    document.getElementById('mgr-club-crest').innerHTML = CareerEngine.renderClubCrestHTML(club, 48);
     document.getElementById('mgr-club-name').textContent = club.name;
     document.getElementById('mgr-league-name').textContent = `${league ? league.name : 'League'} • ${club.country}`;
+    document.getElementById('mgr-stadium-name').textContent = `🏟️ ${club.stadium || 'Home Stadium'}`;
     document.getElementById('mgr-record').textContent = `W${mgr.wins} • D${mgr.draws} • L${mgr.losses}`;
     document.getElementById('mgr-budget').textContent = CareerEngine.formatMoney(mgr.budget);
     document.getElementById('mgr-board').textContent = `${mgr.board_confidence}%`;
@@ -208,50 +296,72 @@
         `<span style="color:var(--accent-secondary);font-size:11px;">${nextFix.competition}</span><br/>${hc.name} vs ${ac.name}`;
     }
 
-    document.getElementById('mgr-formation').value = club.formation || '4-3-3';
-    document.getElementById('mgr-style').value = club.tactical_style || 'Balanced';
+    // Tactics Inputs
+    const formation = club.formation || '4-3-3';
+    const tac = club.tactics || { buildUp: 'Balanced', pressing: 'Mid-Block', defLine: 'Normal', tempo: 'Normal' };
+    document.getElementById('mgr-formation').value = formation;
+    document.getElementById('mgr-buildup').value = tac.buildUp;
+    document.getElementById('mgr-pressing').value = tac.pressing;
+    document.getElementById('mgr-defline').value = tac.defLine;
+    document.getElementById('mgr-tempo').value = tac.tempo;
 
+    // Render Interactive Visual Pitch Nodes
     const squadData = CareerEngine.buildClubMatchSquad(state, club.club_id, false);
-    const renderSquadRow = (p) => `
+    const coords = CareerEngine.FORMATION_COORDS[formation] || CareerEngine.FORMATION_COORDS['4-3-3'];
+    const p1 = club.primary_color || '#004C99';
+    const p2 = club.secondary_color || '#FFD100';
+
+    document.getElementById('pitch-nodes-layer').innerHTML = squadData.starters.slice(0, 11).map((p, idx) => {
+      const slot = coords[idx] || { pos: p.position, x: 50, y: 50 };
+      const lastName = p.name.split(' ').slice(-1)[0];
+      const isSelected = selectedSwapId === p.player_id;
+      return `
+        <div class="pitch-node ${isSelected ? 'selected-node' : ''}" data-pid="${p.player_id}" style="left:${slot.x}%;top:${slot.y}%;">
+          <div class="node-jersey" style="background:${p1};color:${p2};">${p.overall}</div>
+          <div class="node-label">${slot.pos} • ${lastName}</div>
+        </div>
+      `;
+    }).join('');
+
+    // Render Substitutes Bench
+    document.getElementById('mgr-bench-list').innerHTML = squadData.subs.map((p) => `
       <div class="list-row ${selectedSwapId === p.player_id ? 'selected-swap' : ''}" data-pid="${p.player_id}">
         <div style="display:flex;align-items:center;gap:8px;">
           <span class="pos-tag">${p.position}</span>
           <div>
-            <div style="font-size:13px;font-weight:800;">${p.name}</div>
+            <div style="font-size:12px;font-weight:800;">${p.name}</div>
             <div style="font-size:10px;color:var(--text-muted);">Age ${p.age} • Fit ${p.fitness}%</div>
           </div>
         </div>
-        <div style="font-size:15px;font-weight:900;color:var(--accent-primary);">${p.overall}</div>
+        <div style="font-size:14px;font-weight:900;color:var(--accent-primary);">${p.overall}</div>
       </div>
-    `;
+    `).join('');
 
-    document.getElementById('mgr-xi-list').innerHTML = squadData.starters.map(renderSquadRow).join('');
-    document.getElementById('mgr-bench-list').innerHTML = squadData.subs.map(renderSquadRow).join('');
-
-    document.querySelectorAll('#mgr-tab-squad .list-row').forEach((row) => {
-      row.addEventListener('click', async () => {
-        const pid = row.dataset.pid;
-        if (!selectedSwapId) {
-          selectedSwapId = pid;
-          showToast('Tap a player from the other list to swap!');
-          renderManagerMode();
-        } else if (selectedSwapId === pid) {
-          selectedSwapId = null;
-          renderManagerMode();
-        } else {
-          const swapped = ManagerEngine.swapPlayers(state, selectedSwapId, pid);
-          selectedSwapId = null;
-          if (swapped) {
-            await StorageDB.saveState(state);
-            showToast('Lineup Swapped!');
-          } else {
-            showToast('Select 1 Starter and 1 Sub to swap.');
-          }
-          renderManagerMode();
+    // Handle Tapping Any Player on Pitch or Bench to Swap
+    const handleSwapTap = async (pid) => {
+      if (!selectedSwapId) {
+        selectedSwapId = pid;
+        showToast('Now tap another player on Pitch or Bench to swap!');
+        renderManagerMode();
+      } else if (selectedSwapId === pid) {
+        selectedSwapId = null;
+        renderManagerMode();
+      } else {
+        const swapped = ManagerEngine.swapAnySquadPlayers(state, selectedSwapId, pid);
+        selectedSwapId = null;
+        if (swapped) {
+          await StorageDB.saveState(state);
+          showToast('Tactical Lineup Swapped!');
         }
-      });
+        renderManagerMode();
+      }
+    };
+
+    document.querySelectorAll('#pitch-nodes-layer .pitch-node, #mgr-bench-list .list-row').forEach((el) => {
+      el.addEventListener('click', () => handleSwapTap(el.dataset.pid));
     });
 
+    // Transfer Market
     const filter = document.getElementById('mgr-market-filter').value;
     const market = ManagerEngine.getTransferMarket(state, filter);
     document.getElementById('mgr-market-list').innerHTML = market.slice(0, 15).map((p) => `
@@ -300,6 +410,7 @@
       });
     });
 
+    // Table & Awards
     document.getElementById('mgr-table-title').textContent = league ? league.name : 'Standings';
     const rows = state.standings[club.league_id] || [];
     document.getElementById('mgr-table-body').innerHTML = rows.map((r, idx) => `
@@ -316,16 +427,25 @@
   }
 
   function renderPlayerMode() {
-    CareerEngine.ensureV3State(state);
+    CareerEngine.ensureV4State(state);
     const career = state.career;
     const userP = state.players[career.player_id];
     const currentClub = state.clubs.find((c) => c.club_id === career.current_club_id) || state.clubs[0];
 
     document.getElementById('plr-ovr').textContent = userP.overall;
     document.getElementById('plr-pos').textContent = userP.position;
+    document.getElementById('plr-club-crest').innerHTML = CareerEngine.renderClubCrestHTML(currentClub, 48);
     document.getElementById('plr-name').textContent = userP.name;
     document.getElementById('plr-club').textContent = `${currentClub.name} • Age ${userP.age} • ${userP.nationality}`;
     document.getElementById('plr-value').textContent = `Val: ${CareerEngine.formatMoney(userP.market_value || 1000000)}`;
+
+    // FUT 6-Stat Strip
+    document.getElementById('fut-pac').textContent = userP.attributes.pace;
+    document.getElementById('fut-sho').textContent = userP.attributes.shooting;
+    document.getElementById('fut-pas').textContent = userP.attributes.passing;
+    document.getElementById('fut-dri').textContent = userP.attributes.dribbling;
+    document.getElementById('fut-def').textContent = userP.attributes.defending;
+    document.getElementById('fut-phy').textContent = userP.attributes.physical;
 
     const stageObj = CareerEngine.STAGES.find((s) => s.id === career.stage);
     document.getElementById('plr-stage').textContent = stageObj ? stageObj.label : career.stage;
@@ -469,6 +589,94 @@
     else renderPlayerMode();
   }
 
+  // ==================== CUSTOM EDITOR STUDIO LOGIC ====================
+  function populateEditorDropdowns() {
+    // 1. Players Dropdown
+    const plrSel = document.getElementById('ed-plr-select');
+    const allPlayers = Object.values(state.players).sort((a, b) => b.overall - a.overall);
+    plrSel.innerHTML = `<option value="">➕ CREATE NEW PLAYER</option>` +
+      allPlayers.map((p) => `<option value="${p.player_id}">${p.name} (${p.position} • ${p.overall} OVR)</option>`).join('');
+
+    const plrClubSel = document.getElementById('ed-plr-club');
+    plrClubSel.innerHTML = state.clubs.map((c) => `<option value="${c.club_id}">${c.name}</option>`).join('');
+
+    // 2. Clubs Dropdown
+    const clbSel = document.getElementById('ed-clb-select');
+    clbSel.innerHTML = `<option value="">➕ CREATE NEW CLUB</option>` +
+      state.clubs.map((c) => `<option value="${c.club_id}">${c.name} (${c.country} • ${c.rating} OVR)</option>`).join('');
+
+    const clbLgeSel = document.getElementById('ed-clb-league');
+    clbLgeSel.innerHTML = state.leagues.map((l) => `<option value="${l.league_id}">${l.name}</option>`).join('');
+
+    // 3. Leagues & Cups Dropdown
+    const lgeSel = document.getElementById('ed-lge-select');
+    lgeSel.innerHTML = `<option value="">➕ CREATE NEW LEAGUE / TOURNAMENT</option>` +
+      state.leagues.map((l) => `<option value="league:${l.league_id}">[League] ${l.name}</option>`).join('') +
+      state.trophies.map((t) => `<option value="cup:${t.trophy_id}">[Cup] ${t.name}</option>`).join('');
+
+    loadSelectedPlayerIntoEditor();
+    loadSelectedClubIntoEditor();
+    loadSelectedLeagueIntoEditor();
+  }
+
+  function loadSelectedPlayerIntoEditor() {
+    const pid = document.getElementById('ed-plr-select').value;
+    const p = state.players[pid];
+    document.getElementById('ed-plr-name').value = p ? p.name : 'New Star';
+    document.getElementById('ed-plr-club').value = p ? p.club_id : state.clubs[0].club_id;
+    document.getElementById('ed-plr-pos').value = p ? p.position : 'ST';
+    document.getElementById('ed-plr-age').value = p ? p.age : 20;
+    document.getElementById('ed-plr-pot').value = p ? p.potential : 88;
+    document.getElementById('ed-plr-pac').value = p ? p.attributes.pace : 78;
+    document.getElementById('ed-plr-sho').value = p ? p.attributes.shooting : 78;
+    document.getElementById('ed-plr-pas').value = p ? p.attributes.passing : 75;
+    document.getElementById('ed-plr-dri').value = p ? p.attributes.dribbling : 78;
+    document.getElementById('ed-plr-def').value = p ? p.attributes.defending : 50;
+    document.getElementById('ed-plr-phy').value = p ? p.attributes.physical : 74;
+  }
+
+  function loadSelectedClubIntoEditor() {
+    const cid = document.getElementById('ed-clb-select').value;
+    const c = state.clubs.find((x) => x.club_id === cid);
+    uploadedClubLogoDataUrl = null;
+    document.getElementById('ed-clb-name').value = c ? c.name : 'Thamizhagam FC';
+    document.getElementById('ed-clb-short').value = c ? c.short_name : 'TFC';
+    document.getElementById('ed-clb-stadium').value = c ? (c.stadium || '') : 'Coimbatore Jawaharlal Nehru Stadium';
+    document.getElementById('ed-clb-league').value = c ? c.league_id : state.leagues[0].league_id;
+    document.getElementById('ed-clb-rating').value = c ? c.rating : 72;
+    document.getElementById('ed-clb-c1').value = c ? (c.primary_color || '#004C99') : '#7A0026';
+    document.getElementById('ed-clb-c2').value = c ? (c.secondary_color || '#FFD100') : '#FFD100';
+    document.getElementById('ed-clb-pattern').value = c ? (c.crest_pattern || 'stripes') : 'stripes';
+  }
+
+  function loadSelectedLeagueIntoEditor() {
+    const val = document.getElementById('ed-lge-select').value;
+    if (!val) {
+      document.getElementById('ed-lge-type').value = 'cup';
+      document.getElementById('ed-lge-name').value = 'Spidey Champions Trophy';
+      document.getElementById('ed-lge-country').value = 'India';
+      document.getElementById('ed-lge-rep').value = 88;
+      return;
+    }
+    const [kind, id] = val.split(':');
+    document.getElementById('ed-lge-type').value = kind;
+    if (kind === 'league') {
+      const l = state.leagues.find((x) => x.league_id === id);
+      if (l) {
+        document.getElementById('ed-lge-name').value = l.name;
+        document.getElementById('ed-lge-country').value = l.country;
+        document.getElementById('ed-lge-rep').value = l.reputation || 80;
+      }
+    } else {
+      const t = state.trophies.find((x) => x.trophy_id === id);
+      if (t) {
+        document.getElementById('ed-lge-name').value = t.name;
+        document.getElementById('ed-lge-country').value = t.region || 'World';
+        document.getElementById('ed-lge-rep').value = t.prestige || 85;
+      }
+    }
+  }
+
   // ==================== ALL-PLAYER MATCH RATINGS RENDERER ====================
   function renderAllPlayersRatings() {
     if (!lastFinishedMatch) return;
@@ -518,6 +726,8 @@
       : state.clubs.find((c) => c.club_id === fix.away_club_id);
 
     document.getElementById('match-comp-title').textContent = fix.competition;
+    document.getElementById('sim-home-crest').innerHTML = fix.is_international ? '🏳️' : CareerEngine.renderClubCrestHTML(hc, 34);
+    document.getElementById('sim-away-crest').innerHTML = fix.is_international ? '🏳️' : CareerEngine.renderClubCrestHTML(ac, 34);
     document.getElementById('sim-home-name').textContent = hc.name;
     document.getElementById('sim-away-name').textContent = ac.name;
     document.getElementById('sim-score').textContent = '0 - 0';
@@ -602,6 +812,7 @@
   async function finalizeMatch(ctx) {
     isSimulating = false;
     isPausedForDecision = false;
+    SoundFX.playWhistle();
     const { fix, result, isMgr } = ctx;
     lastFinishedMatch = result;
 
@@ -614,7 +825,6 @@
     document.getElementById('match-stats-summary').textContent =
       `Poss: ${result.stats.home.possession}%-${result.stats.away.possession}% | Shots: ${result.stats.home.shots}-${result.stats.away.shots} | Pass: ${result.stats.home.passAccuracy}%-${result.stats.away.passAccuracy}%`;
 
-    // Show All-Players Ratings Breakdown
     document.getElementById('all-ratings-section').style.display = 'block';
     document.getElementById('btn-rtg-home').textContent = `${result.homeClub.short_name} Ratings`;
     document.getElementById('btn-rtg-away').textContent = `${result.awayClub.short_name} Ratings`;
@@ -647,6 +857,7 @@
     const ctx = prepareMatchSimulation();
     if (!ctx) return;
 
+    SoundFX.playWhistle();
     currentMatchContext = ctx;
     const feedEl = document.getElementById('commentary-feed');
     feedEl.innerHTML = '';
@@ -678,6 +889,8 @@
       const ev = ctx.result.events[idx];
       idx += 1;
 
+      if (ev.type === 'GOAL') SoundFX.playGoalRoar();
+
       document.getElementById('match-clock').textContent = `${ev.minute}'`;
       document.getElementById('pitch-ball').style.left = `${ev.ballX || 50}%`;
       document.getElementById('pitch-ball').style.top = `${ev.ballY || 50}%`;
@@ -700,8 +913,9 @@
             kmBox.classList.remove('active');
             const outcome = MatchEngine.resolveKeyMoment(ctx.result, ev, btn.dataset.choice);
             if (outcome.scoredSide) {
+              SoundFX.playGoalRoar();
               document.getElementById('pitch-ball').style.left = outcome.scoredSide === 'home' ? '96%' : '4%';
-              document.getElementById('pitch-zone-label').textContent = 'GOAL!';
+              document.getElementById('pitch-zone-label').textContent = 'GOOOAL!';
             }
             document.getElementById('sim-score').textContent = `${ctx.result.stats.home.score} - ${ctx.result.stats.away.score}`;
 
@@ -732,6 +946,11 @@
   await StorageDB.saveState(state);
   setupBackButton();
 
+  document.getElementById('btn-toggle-sfx').addEventListener('click', (e) => {
+    sfxEnabled = !sfxEnabled;
+    e.target.textContent = sfxEnabled ? '🔊 SFX ON' : '🔇 SFX OFF';
+  });
+
   const populateClubDropdown = (selectEl, selectedId) => {
     selectEl.innerHTML = '';
     state.clubs.forEach((c) => {
@@ -752,7 +971,6 @@
     btn.addEventListener('click', () => switchTab(Number(btn.dataset.idx)));
   });
 
-  // Sub-tab Switching (Table / Golden Boot / World Rank / Ballon d'Or)
   document.querySelectorAll('.subtab-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       const bar = btn.parentElement;
@@ -764,7 +982,6 @@
     });
   });
 
-  // All-Player Ratings Side Toggle
   document.getElementById('btn-rtg-home').addEventListener('click', () => {
     ratingViewSide = 'home';
     renderAllPlayersRatings();
@@ -774,7 +991,6 @@
     renderAllPlayersRatings();
   });
 
-  // Celebration Modal Close
   document.getElementById('btn-close-celebration').addEventListener('click', () => {
     document.getElementById('celebration-modal').classList.remove('open');
   });
@@ -797,9 +1013,15 @@
   });
 
   document.getElementById('btn-save-tactics').addEventListener('click', async () => {
-    ManagerEngine.setTactics(state, document.getElementById('mgr-formation').value, document.getElementById('mgr-style').value);
+    ManagerEngine.setFullTactics(state, {
+      formation: document.getElementById('mgr-formation').value,
+      buildUp: document.getElementById('mgr-buildup').value,
+      pressing: document.getElementById('mgr-pressing').value,
+      defLine: document.getElementById('mgr-defline').value,
+      tempo: document.getElementById('mgr-tempo').value
+    });
     await StorageDB.saveState(state);
-    showToast('Team Tactics Updated!');
+    showToast('Tactical Blueprint Applied!');
     renderManagerMode();
   });
 
@@ -870,6 +1092,73 @@
     renderPlayerMode();
   });
 
+  // Custom Editor Studio Listeners
+  document.getElementById('ed-plr-select').addEventListener('change', loadSelectedPlayerIntoEditor);
+  document.getElementById('btn-ed-save-player').addEventListener('click', async () => {
+    const saved = CareerEngine.upsertCustomPlayer(state, {
+      player_id: document.getElementById('ed-plr-select').value,
+      name: document.getElementById('ed-plr-name').value,
+      club_id: document.getElementById('ed-plr-club').value,
+      position: document.getElementById('ed-plr-pos').value,
+      age: document.getElementById('ed-plr-age').value,
+      potential: document.getElementById('ed-plr-pot').value,
+      pace: document.getElementById('ed-plr-pac').value,
+      shooting: document.getElementById('ed-plr-sho').value,
+      passing: document.getElementById('ed-plr-pas').value,
+      dribbling: document.getElementById('ed-plr-dri').value,
+      defending: document.getElementById('ed-plr-def').value,
+      physical: document.getElementById('ed-plr-phy').value
+    });
+    await StorageDB.saveState(state);
+    populateEditorDropdowns();
+    showToast(`Saved ${saved.name} (${saved.overall} OVR)!`);
+  });
+
+  document.getElementById('ed-clb-select').addEventListener('change', loadSelectedClubIntoEditor);
+  document.getElementById('ed-clb-logo-file').addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      uploadedClubLogoDataUrl = reader.result;
+      showToast('Custom Logo Selected! Tap Save Club.');
+    };
+    reader.readAsDataURL(file);
+  });
+  document.getElementById('btn-ed-save-club').addEventListener('click', async () => {
+    const saved = CareerEngine.upsertCustomClub(state, {
+      club_id: document.getElementById('ed-clb-select').value,
+      name: document.getElementById('ed-clb-name').value,
+      short_name: document.getElementById('ed-clb-short').value,
+      stadium: document.getElementById('ed-clb-stadium').value,
+      league_id: document.getElementById('ed-clb-league').value,
+      rating: document.getElementById('ed-clb-rating').value,
+      primary_color: document.getElementById('ed-clb-c1').value,
+      secondary_color: document.getElementById('ed-clb-c2').value,
+      crest_pattern: document.getElementById('ed-clb-pattern').value,
+      custom_logo: uploadedClubLogoDataUrl
+    });
+    await StorageDB.saveState(state);
+    populateEditorDropdowns();
+    showToast(`Saved Club: ${saved.name}!`);
+  });
+
+  document.getElementById('ed-lge-select').addEventListener('change', loadSelectedLeagueIntoEditor);
+  document.getElementById('btn-ed-save-league').addEventListener('click', async () => {
+    const val = document.getElementById('ed-lge-select').value;
+    const id = val ? val.split(':')[1] : null;
+    CareerEngine.upsertCustomLeagueOrCup(state, {
+      id,
+      type: document.getElementById('ed-lge-type').value,
+      name: document.getElementById('ed-lge-name').value,
+      country: document.getElementById('ed-lge-country').value,
+      reputation: document.getElementById('ed-lge-rep').value
+    });
+    await StorageDB.saveState(state);
+    populateEditorDropdowns();
+    showToast('Competition Saved!');
+  });
+
   // Match Arena Listeners
   document.getElementById('btn-sim-live').addEventListener('click', () => startMatchPlayback(false));
   document.getElementById('btn-sim-instant').addEventListener('click', () => startMatchPlayback(true));
@@ -883,8 +1172,11 @@
 
   document.getElementById('mgr-live-mentality').addEventListener('change', (e) => {
     const club = state.clubs.find((c) => c.club_id === state.manager.club_id);
-    if (club) club.tactical_style = e.target.value;
-    showToast(`Touchline Mentality: ${e.target.value}`);
+    if (club) {
+      club.tactical_style = e.target.value;
+      if (club.tactics) club.tactics.buildUp = e.target.value;
+    }
+    showToast(`Touchline Style: ${e.target.value}`);
   });
 
   document.getElementById('btn-mgr-quick-sub').addEventListener('click', () => {
@@ -894,7 +1186,7 @@
     }
     const line = document.createElement('div');
     line.className = 'event-line user-highlight';
-    line.innerHTML = `<span class="event-min">SUB</span>Manager sends on fresh legs from the bench to boost tempo!`;
+    line.innerHTML = `<span class="event-min">SUB</span>Manager sends on fresh legs from the bench!`;
     document.getElementById('commentary-feed').prepend(line);
     showToast('Fresh Sub Sent On!');
   });
@@ -915,7 +1207,7 @@
     ManagerEngine.ensureManagerState(state);
     await StorageDB.saveState(state);
     showToast('All Saves Reset!');
-    renderAll();
+    setMode('manager');
   });
 
   setMode('manager');
