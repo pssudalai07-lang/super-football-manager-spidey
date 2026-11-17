@@ -1,0 +1,8 @@
+[
+  { "nation_id": "NAT_IND", "name": "India", "code": "IND", "confederation": "AFC", "rating": 65, "formation": "4-2-3-1", "min_callup_ovr": 65, "source": "Open Dataset" },
+  { "nation_id": "NAT_ENG", "name": "England", "code": "ENG", "confederation": "UEFA", "rating": 87, "formation": "4-2-3-1", "min_callup_ovr": 82, "source": "Open Dataset" },
+  { "nation_id": "NAT_ESP", "name": "Spain", "code": "ESP", "confederation": "UEFA", "rating": 88, "formation": "4-3-3", "min_callup_ovr": 83, "source": "Open Dataset" },
+  { "nation_id": "NAT_ARG", "name": "Argentina", "code": "ARG", "confederation": "CONMEBOL", "rating": 89, "formation": "4-4-2", "min_callup_ovr": 83, "source": "Open Dataset" },
+  { "nation_id": "NAT_BRA", "name": "Brazil", "code": "BRA", "confederation": "CONMEBOL", "rating": 88, "formation": "4-2-3-1", "min_callup_ovr": 83, "source": "Open Dataset" },
+  { "nation_id": "NAT_JPN", "name": "Japan", "code": "JPN", "confederation": "AFC", "rating": 79, "formation": "4-2-3-1", "min_callup_ovr": 75, "source": "Open Dataset" }
+]
