@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>SUPER FOOTBALL MANAGER BY SPIDEY</title>
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <div class="brand-title">SUPER FOOTBALL MANAGER</div>
+      <div class="brand-sub">BY SPIDEY • PLAYER CAREER MODE</div>
+    </div>
+    <span class="free-badge">100% FREE</span>
+  </header>
+
+  <div id="toast" class="toast"></div>
+
+  <main class="container">
+    <!-- TAB 1: CAREER HUB -->
+    <section id="tab-home" class="tab-panel active">
+      <div class="card player-hero">
+        <div class="ovr-badge">
+          <span id="hero-ovr" class="num">70</span>
+          <span id="hero-pos" class="pos">CAM</span>
+        </div>
+        <div class="player-meta" style="flex:1;">
+          <h2 id="hero-name">Spidey</h2>
+          <p id="hero-club">Chennaiyin FC • Age 18 • India</p>
+          <span id="hero-stage" class="stage-pill">Youth Prospect</span>
+        </div>
+        <button id="btn-open-creator" class="btn btn-secondary btn-sm">Edit Pro</button>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-box">
+          <div id="kpi-apps" class="kpi-val">0</div>
+          <div class="kpi-lbl">Apps</div>
+        </div>
+        <div class="kpi-box">
+          <div id="kpi-goals" class="kpi-val">0</div>
+          <div class="kpi-lbl">Goals</div>
+        </div>
+        <div class="kpi-box">
+          <div id="kpi-assists" class="kpi-val">0</div>
+          <div class="kpi-lbl">Assists</div>
+        </div>
+        <div class="kpi-box">
+          <div id="kpi-rating" class="kpi-val">0.0</div>
+          <div class="kpi-lbl">Avg Rtg</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>Next Fixture</span>
+          <span id="season-week-label">2025-26 • Week 1</span>
+        </div>
+        <div id="next-match-preview" style="margin-bottom: 12px; font-size: 14px; font-weight: 700;">
+          Loading fixture...
+        </div>
+        <button id="btn-go-match" class="btn btn-primary">PLAY MATCHDAY (90 MIN SIM)</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <span>Status & Manager Trust</span>
+          <span id="squad-role-label">Rotation Prospect</span>
+        </div>
+        <div class="attr-row">
+          <span class="attr-label">Fitness</span>
+          <div class="attr-bar-wrap"><div id="bar-fitness" class="attr-bar-fill" style="width:100%"></div></div>
+          <span id="val-fitness" class="attr-num">100</span>
+        </div>
+        <div class="attr-row">
+          <span class="attr-label">Morale</span>
+          <div class="attr-bar-wrap"><div id="bar-morale" class="attr-bar-fill" style="width:75%"></div></div>
+          <span id="val-morale" class="attr-num">75</span>
+        </div>
+        <div class="attr-row">
+          <span class="attr-label">Coach Trust</span>
+          <div class="attr-bar-wrap"><div id="bar-trust" class="attr-bar-fill" style="width:60%"></div></div>
+          <span id="val-trust" class="attr-num">60</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span>Recent Matches</span></div>
+        <div id="recent-matches-list" style="font-size: 12px; color: var(--text-muted);">
+          No matches played yet. Tap Play Matchday to start your career!
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: MATCHDAY LIVE SIM -->
+    <section id="tab-match" class="tab-panel">
+      <div class="card">
+        <div class="card-title">
+          <span id="match-comp-title">MATCHDAY ARENA</span>
+          <span id="match-clock" class="match-min">0'</span>
+        </div>
+
+        <div class="scoreboard">
+          <div class="team-col">
+            <div id="sim-home-name" class="team-name">Home FC</div>
+          </div>
+          <div class="score-col">
+            <div id="sim-score" class="score-digits">0 - 0</div>
+          </div>
+          <div class="team-col">
+            <div id="sim-away-name" class="team-name">Away FC</div>
+          </div>
+        </div>
+
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">Your Tactical Focus:</div>
+        <div class="focus-pills">
+          <button class="focus-btn active" data-focus="balanced">Balanced</button>
+          <button class="focus-btn" data-focus="attack">Get Goals</button>
+          <button class="focus-btn" data-focus="playmaker">Playmaker</button>
+          <button class="focus-btn" data-focus="workrate">Workrate</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px;">
+          <button id="btn-sim-live" class="btn btn-primary">Live 90-Min Sim</button>
+          <button id="btn-sim-instant" class="btn btn-secondary">Instant Result</button>
+        </div>
+      </div>
+
+      <div id="user-match-card" class="card" style="display:none;">
+        <div class="card-title"><span>Your Performance</span><span id="user-motm-badge" style="color:var(--accent-gold);"></span></div>
+        <div class="kpi-grid" style="margin-bottom:0;">
+          <div class="kpi-box"><div id="u-stat-min" class="kpi-val">0'</div><div class="kpi-lbl">Mins</div></div>
+          <div class="kpi-box"><div id="u-stat-ga" class="kpi-val">0 / 0</div><div class="kpi-lbl">G / A</div></div>
+          <div class="kpi-box"><div id="u-stat-pass" class="kpi-val">0</div><div class="kpi-lbl">Passes</div></div>
+          <div class="kpi-box"><div id="u-stat-rtg" class="kpi-val">6.4</div><div class="kpi-lbl">Rating</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span>Match Commentary & Team Stats</span></div>
+        <div id="match-stats-summary" style="font-size: 12px; color: var(--accent-secondary); margin-bottom: 8px;"></div>
+        <div id="commentary-feed" class="commentary-feed">
+          Choose your tactical focus and start the match simulation!
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: ATTRIBUTES & TRAINING -->
+    <section id="tab-training" class="tab-panel">
+      <div class="card">
+        <div class="card-title">
+          <span>Player Attributes</span>
+          <span id="pot-label" style="color: var(--accent-gold);">Potential: 94</span>
+        </div>
+        <div id="attributes-container"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span>Weekly Training & Recovery</span></div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <button class="btn btn-secondary drill-btn" data-drill="finishing">Finishing Drill</button>
+          <button class="btn btn-secondary drill-btn" data-drill="playmaking">Vision & Passing</button>
+          <button class="btn btn-secondary drill-btn" data-drill="speed">Pace & Dribbling</button>
+          <button class="btn btn-secondary drill-btn" data-drill="defending">Stamina & Defense</button>
+        </div>
+        <button class="btn btn-gold drill-btn" data-drill="rest" style="margin-top: 8px;">Rest & Recovery (+25% Fitness)</button>
+      </div>
+    </section>
+
+    <!-- TAB 4: TRANSFERS & NATIONAL TEAM -->
+    <section id="tab-transfers" class="tab-panel">
+      <div class="card">
+        <div class="card-title">
+          <span>International Career</span>
+          <span id="intl-status-badge" style="color: var(--accent-secondary);">Scouting</span>
+        </div>
+        <p id="intl-summary" style="font-size: 13px; line-height: 1.5; margin-bottom: 8px;"></p>
+        <div style="font-size: 12px; color: var(--text-muted);">
+          Caps: <strong id="intl-caps" style="color:#fff;">0</strong> • International Goals: <strong id="intl-goals" style="color:#fff;">0</strong>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span>Club Transfer Offers</span></div>
+        <div id="transfer-offers-list" style="font-size: 13px; color: var(--text-muted);">
+          Play matches and keep your match rating high to attract offers from ISL & European clubs!
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: LEAGUE TABLE & TROPHIES -->
+    <section id="tab-league" class="tab-panel">
+      <div class="card">
+        <div class="card-title">
+          <span id="league-table-title">League Standings</span>
+          <span id="db-meta-label">DB v1.0</span>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="league-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Club</th>
+                <th>P</th>
+                <th>W</th>
+                <th>D</th>
+                <th>L</th>
+                <th>GD</th>
+                <th>PTS</th>
+              </tr>
+            </thead>
+            <tbody id="league-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><span>Trophies & Achievements</span></div>
+        <div id="achievements-list" style="font-size: 12px;"></div>
+      </div>
+
+      <button id="btn-reset-career" class="btn btn-secondary" style="color: var(--accent-danger); margin-bottom: 16px;">
+        Start Fresh Career (Reset Save)
+      </button>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-tab="tab-home"><span class="nav-icon">⚽</span><span>Career</span></button>
+    <button class="nav-item" data-tab="tab-match"><span class="nav-icon">🏟️</span><span>Match</span></button>
+    <button class="nav-item" data-tab="tab-training"><span class="nav-icon">📈</span><span>Train</span></button>
+    <button class="nav-item" data-tab="tab-transfers"><span class="nav-icon">✈️</span><span>Transfers</span></button>
+    <button class="nav-item" data-tab="tab-league"><span class="nav-icon">🏆</span><span>Table</span></button>
+  </nav>
+
+  <div id="creator-modal" class="modal-backdrop">
+    <div class="modal-box">
+      <h3 style="margin-bottom: 12px; color: var(--accent-primary);">Customize Your Footballer</h3>
+      <div class="form-group">
+        <label>Player Name</label>
+        <input id="inp-name" type="text" value="Spidey" maxlength="24" />
+      </div>
+      <div class="form-group">
+        <label>Age (17 - 24)</label>
+        <input id="inp-age" type="number" value="18" min="17" max="24" />
+      </div>
+      <div class="form-group">
+        <label>Position</label>
+        <select id="inp-pos">
+          <option value="ST">ST (Striker)</option>
+          <option value="LW">LW (Left Winger)</option>
+          <option value="RW">RW (Right Winger)</option>
+          <option value="CAM" selected>CAM (Attacking Mid)</option>
+          <option value="CM">CM (Central Mid)</option>
+          <option value="CDM">CDM (Defensive Mid)</option>
+          <option value="CB">CB (Center Back)</option>
+          <option value="LB">LB (Left Back)</option>
+          <option value="RB">RB (Right Back)</option>
+          <option value="GK">GK (Goalkeeper)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Nationality</label>
+        <select id="inp-nation">
+          <option value="India" selected>India</option>
+          <option value="England">England</option>
+          <option value="Spain">Spain</option>
+          <option value="Argentina">Argentina</option>
+          <option value="Brazil">Brazil</option>
+          <option value="Japan">Japan</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Starting Club</label>
+        <select id="inp-club"></select>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 14px;">
+        <button id="btn-cancel-creator" class="btn btn-secondary">Cancel</button>
+        <button id="btn-save-creator" class="btn btn-primary">Save Player</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="./js/storage.js"></script>
+  <script src="./js/match-engine.js"></script>
+  <script src="./js/career-engine.js"></script>
+  <script src="./js/app.js"></script>
+</body>
+</html>
