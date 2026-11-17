@@ -1,0 +1,51 @@
+{
+  "branding": {
+    "game_title": "SUPER FOOTBALL MANAGER BY SPIDEY",
+    "creator": "Spidey",
+    "version": "1.0.0",
+    "monetization": "100_PERCENT_FREE_NO_ADS_NO_IAP"
+  },
+  "custom_clubs": [
+    { "club_id": "CLB_IND_CHENNAI", "name": "Chennaiyin FC", "short_name": "CFC", "league_id": "LGE_IND_ISL", "country": "India", "rating": 65, "formation": "4-2-3-1", "tactical_style": "Counter-Attack" },
+    { "club_id": "CLB_IND_MUMBAI", "name": "Mumbai City FC", "short_name": "MCFC", "league_id": "LGE_IND_ISL", "country": "India", "rating": 68, "formation": "4-3-3", "tactical_style": "Possession" },
+    { "club_id": "CLB_IND_MOHUN", "name": "Mohun Bagan SG", "short_name": "MBSG", "league_id": "LGE_IND_ISL", "country": "India", "rating": 69, "formation": "4-2-3-1", "tactical_style": "Attacking" },
+    { "club_id": "CLB_IND_BENGALURU", "name": "Bengaluru FC", "short_name": "BFC", "league_id": "LGE_IND_ISL", "country": "India", "rating": 66, "formation": "4-3-3", "tactical_style": "Balanced" }
+  ],
+  "custom_players": [
+    {
+      "player_id": "PLR_SPIDEY_PRO",
+      "name": "Spidey",
+      "age": 18,
+      "nationality": "India",
+      "club_id": "CLB_IND_CHENNAI",
+      "nation_id": "NAT_IND",
+      "position": "CAM",
+      "is_custom_protagonist": true,
+      "attributes": {
+        "pace": 72,
+        "shooting": 68,
+        "passing": 71,
+        "dribbling": 74,
+        "defending": 45,
+        "physical": 62
+      },
+      "potential": 94,
+      "source": "Custom Spidey Career Data"
+    }
+  ],
+  "custom_tournaments": [
+    { "trophy_id": "TRP_DURAND", "name": "Durand Cup", "region": "India", "prestige": 65 },
+    { "trophy_id": "TRP_ISL_CUP", "name": "ISL Trophy", "region": "India", "prestige": 72 },
+    { "trophy_id": "TRP_SAFF", "name": "SAFF Championship", "region": "South Asia", "prestige": 70 },
+    { "trophy_id": "TRP_ASIAN_CUP", "name": "AFC Asian Cup", "region": "Asia", "prestige": 85 },
+    { "trophy_id": "TRP_UCL", "name": "European Champions Cup", "region": "Europe", "prestige": 96 },
+    { "trophy_id": "TRP_WORLD_CUP", "name": "World Football Cup", "region": "World", "prestige": 100 }
+  ],
+  "achievements": [
+    { "id": "ACH_DEBUT", "title": "First Step", "desc": "Make your professional club debut." },
+    { "id": "ACH_FIRST_GOAL", "title": "Off the Mark", "desc": "Score your first official senior goal." },
+    { "id": "ACH_BLUE_TIGER", "title": "Blue Tiger Call-Up", "desc": "Earn selection to the Indian National Team." },
+    { "id": "ACH_EURO_MOVE", "title": "European Dream", "desc": "Sign for a top-tier European club." },
+    { "id": "ACH_LEGEND", "title": "Spidey Legend", "desc": "Reach 90+ Overall Rating and win a major international trophy." }
+  ]
+}
