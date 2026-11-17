@@ -13,22 +13,19 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
-      - name: Setup Java 17 (Required for Capacitor / Gradle)
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Install Dependencies
-        run: npm install
+        run: npm install --legacy-peer-deps
 
       - name: Run Unified Database Merger
         run: npm run merge-db
@@ -47,6 +44,7 @@ jobs:
 
       - name: Build Debug APK with Gradle
         run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug
@@ -57,3 +55,4 @@ jobs:
           name: SuperFootballManagerBySpidey-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
+          
