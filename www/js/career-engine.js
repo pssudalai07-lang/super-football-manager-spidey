@@ -1,9 +1,69 @@
 /**
- * SUPER FOOTBALL MANAGER BY SPIDEY (v3.0)
- * Unified Engine: Player Career + Team Manager + Golden Boot + Ballon d'Or + World Rankings + Knockout Cup
+ * SUPER FOOTBALL MANAGER BY SPIDEY (v4.0)
+ * Wikipedia Authentic Club Metadata + SVG Crest Generator + Full Custom Editor + Dual Career Engines
  */
 
 const CareerEngine = (() => {
+  // Wikipedia-verified official names, stadiums & authentic club colors
+  const WIKI_CLUB_BRANDING = {
+    CLB_IND_MOHUN: { wikiName: 'Mohun Bagan Super Giant', stadium: 'Vivekananda Yuba Bharati Krirangan', primary: '#7A0026', secondary: '#006837', pattern: 'stripes' },
+    CLB_IND_CHENNAI: { wikiName: 'Chennaiyin FC', stadium: 'Jawaharlal Nehru Stadium, Chennai', primary: '#004C99', secondary: '#FFD100', pattern: 'sash' },
+    CLB_IND_MUMBAI: { wikiName: 'Mumbai City FC', stadium: 'Mumbai Football Arena', primary: '#6CABDD', secondary: '#1B365D', pattern: 'halves' },
+    CLB_IND_BENGALURU: { wikiName: 'Bengaluru FC', stadium: 'Sree Kanteerava Stadium', primary: '#003399', secondary: '#E31B23', pattern: 'solid' },
+    CLB_IND_KERALA: { wikiName: 'Kerala Blasters FC', stadium: 'Jawaharlal Nehru Stadium, Kochi', primary: '#FDE100', secondary: '#002D72', pattern: 'solid' },
+    CLB_IND_GOA: { wikiName: 'FC Goa', stadium: 'Pandit Jawaharlal Nehru Stadium', primary: '#F37021', secondary: '#0033A0', pattern: 'halves' },
+    CLB_IND_ODISHA: { wikiName: 'Odisha FC', stadium: 'Kalinga Stadium', primary: '#4B286D', secondary: '#F26522', pattern: 'sash' },
+    CLB_IND_EASTBENGAL: { wikiName: 'East Bengal FC', stadium: 'Salt Lake Stadium', primary: '#E31E24', secondary: '#FFD200', pattern: 'halves' },
+    CLB_IND_GOKULAM: { wikiName: 'Gokulam Kerala FC', stadium: 'EMS Corporation Stadium', primary: '#1E1E1E', secondary: '#D4AF37', pattern: 'stripes' },
+    CLB_IND_CHURCHILL: { wikiName: 'Churchill Brothers FC Goa', stadium: 'Tilak Maidan Stadium', primary: '#C8102E', secondary: '#FFFFFF', pattern: 'stripes' },
+    CLB_IND_REALKASHMIR: { wikiName: 'Real Kashmir FC', stadium: 'TRC Turf Ground, Srinagar', primary: '#002147', secondary: '#FFD700', pattern: 'solid' },
+    CLB_IND_SREENIDI: { wikiName: 'Sreenidi Deccan FC', stadium: 'Deccan Arena, Hyderabad', primary: '#008037', secondary: '#FFD100', pattern: 'sash' },
+    CLB_ENG_MANCITY: { wikiName: 'Manchester City F.C.', stadium: 'Etihad Stadium', primary: '#6CABDD', secondary: '#1C2C5B', pattern: 'solid' },
+    CLB_ENG_ARSENAL: { wikiName: 'Arsenal F.C.', stadium: 'Emirates Stadium', primary: '#EF0107', secondary: '#FFFFFF', pattern: 'halves' },
+    CLB_ENG_LIVERPOOL: { wikiName: 'Liverpool F.C.', stadium: 'Anfield', primary: '#C8102E', secondary: '#00B2A9', pattern: 'solid' },
+    CLB_ENG_LEEDS: { wikiName: 'Leeds United F.C.', stadium: 'Elland Road', primary: '#FFFFFF', secondary: '#1D428A', pattern: 'sash' },
+    CLB_ENG_SUNDERLAND: { wikiName: 'Sunderland A.F.C.', stadium: 'Stadium of Light', primary: '#EB172B', secondary: '#FFFFFF', pattern: 'stripes' },
+    CLB_ESP_REALMADRID: { wikiName: 'Real Madrid CF', stadium: 'Santiago Bernabéu Stadium', primary: '#FFFFFF', secondary: '#FEBE10', pattern: 'sash' },
+    CLB_ESP_BARCELONA: { wikiName: 'FC Barcelona', stadium: 'Camp Nou', primary: '#A50044', secondary: '#004D98', pattern: 'stripes' },
+    CLB_ITA_INTER: { wikiName: 'FC Internazionale Milano', stadium: 'San Siro', primary: '#010E80', secondary: '#000000', pattern: 'stripes' },
+    CLB_GER_BAYERN: { wikiName: 'FC Bayern Munich', stadium: 'Allianz Arena', primary: '#DC052D', secondary: '#FFFFFF', pattern: 'halves' },
+    CLB_FRA_PSG: { wikiName: 'Paris Saint-Germain F.C.', stadium: 'Parc des Princes', primary: '#004170', secondary: '#DA291C', pattern: 'stripes' }
+  };
+
+  const FORMATION_COORDS = {
+    '4-3-3': [
+      { pos: 'GK', x: 50, y: 90 },
+      { pos: 'LB', x: 16, y: 72 }, { pos: 'CB', x: 38, y: 76 }, { pos: 'CB', x: 62, y: 76 }, { pos: 'RB', x: 84, y: 72 },
+      { pos: 'CM', x: 26, y: 52 }, { pos: 'CDM', x: 50, y: 58 }, { pos: 'CM', x: 74, y: 52 },
+      { pos: 'LW', x: 18, y: 26 }, { pos: 'ST', x: 50, y: 18 }, { pos: 'RW', x: 82, y: 26 }
+    ],
+    '4-2-3-1': [
+      { pos: 'GK', x: 50, y: 90 },
+      { pos: 'LB', x: 16, y: 72 }, { pos: 'CB', x: 38, y: 76 }, { pos: 'CB', x: 62, y: 76 }, { pos: 'RB', x: 84, y: 72 },
+      { pos: 'CDM', x: 36, y: 57 }, { pos: 'CDM', x: 64, y: 57 },
+      { pos: 'LW', x: 18, y: 36 }, { pos: 'CAM', x: 50, y: 38 }, { pos: 'RW', x: 82, y: 36 },
+      { pos: 'ST', x: 50, y: 17 }
+    ],
+    '4-4-2': [
+      { pos: 'GK', x: 50, y: 90 },
+      { pos: 'LB', x: 16, y: 72 }, { pos: 'CB', x: 38, y: 76 }, { pos: 'CB', x: 62, y: 76 }, { pos: 'RB', x: 84, y: 72 },
+      { pos: 'LM', x: 16, y: 46 }, { pos: 'CM', x: 38, y: 50 }, { pos: 'CM', x: 62, y: 50 }, { pos: 'RM', x: 84, y: 46 },
+      { pos: 'ST', x: 36, y: 20 }, { pos: 'ST', x: 64, y: 20 }
+    ],
+    '3-5-2': [
+      { pos: 'GK', x: 50, y: 90 },
+      { pos: 'CB', x: 25, y: 75 }, { pos: 'CB', x: 50, y: 78 }, { pos: 'CB', x: 75, y: 75 },
+      { pos: 'LWB', x: 12, y: 48 }, { pos: 'CDM', x: 36, y: 55 }, { pos: 'CAM', x: 50, y: 38 }, { pos: 'CDM', x: 64, y: 55 }, { pos: 'RWB', x: 88, y: 48 },
+      { pos: 'ST', x: 36, y: 19 }, { pos: 'ST', x: 64, y: 19 }
+    ],
+    '5-3-2': [
+      { pos: 'GK', x: 50, y: 90 },
+      { pos: 'LWB', x: 12, y: 66 }, { pos: 'CB', x: 30, y: 75 }, { pos: 'CB', x: 50, y: 78 }, { pos: 'CB', x: 70, y: 75 }, { pos: 'RWB', x: 88, y: 66 },
+      { pos: 'CM', x: 28, y: 48 }, { pos: 'CDM', x: 50, y: 53 }, { pos: 'CM', x: 72, y: 48 },
+      { pos: 'ST', x: 36, y: 20 }, { pos: 'ST', x: 64, y: 20 }
+    ]
+  };
+
   const STAGES = [
     { id: 'YOUTH_PROSPECT', label: 'Youth Prospect', minOvr: 0 },
     { id: 'FIRST_TEAM_REGULAR', label: 'First-Team Regular', minOvr: 64 },
@@ -20,6 +80,52 @@ const CareerEngine = (() => {
     { id: 'TRT_ENGINE', name: 'Tireless Engine', desc: '+4 Physical & slower match fatigue', reqApps: 5 },
     { id: 'TRT_DRIBBLER', name: 'Speed Dribbler', desc: '+4 Pace & Dribbling', reqRating: 7.4 }
   ];
+
+  function renderClubCrestHTML(club, size = 46) {
+    if (!club) return '';
+    if (club.custom_logo) {
+      return `<img src="${club.custom_logo}" alt="${club.short_name}" style="width:${size}px;height:${size}px;object-fit:contain;border-radius:8px;" />`;
+    }
+    const p1 = club.primary_color || '#004C99';
+    const p2 = club.secondary_color || '#FFD100';
+    const pattern = club.crest_pattern || 'stripes';
+    const code = (club.short_name || club.name.slice(0, 3)).toUpperCase().slice(0, 4);
+    const uid = `cr_${club.club_id}_${Math.floor(Math.random() * 9999)}`;
+
+    let innerPattern = `<rect width="100" height="100" fill="${p1}" />`;
+    if (pattern === 'stripes') {
+      innerPattern = `
+        <rect width="100" height="100" fill="${p1}" />
+        <rect x="20" width="15" height="100" fill="${p2}" />
+        <rect x="50" width="15" height="100" fill="${p2}" />
+        <rect x="80" width="15" height="100" fill="${p2}" />
+      `;
+    } else if (pattern === 'halves') {
+      innerPattern = `
+        <rect width="50" height="100" fill="${p1}" />
+        <rect x="50" width="50" height="100" fill="${p2}" />
+      `;
+    } else if (pattern === 'sash') {
+      innerPattern = `
+        <rect width="100" height="100" fill="${p1}" />
+        <polygon points="0,0 28,0 100,72 100,100 72,100 0,28" fill="${p2}" />
+      `;
+    }
+
+    return `
+      <svg width="${size}" height="${size}" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <clipPath id="${uid}">
+            <path d="M50 4 L92 18 L92 54 C92 78 72 92 50 97 C28 92 8 78 8 54 L8 18 Z" />
+          </clipPath>
+        </defs>
+        <g clip-path="url(#${uid})">${innerPattern}</g>
+        <path d="M50 4 L92 18 L92 54 C92 78 72 92 50 97 C28 92 8 78 8 54 L8 18 Z" fill="none" stroke="#ffd166" stroke-width="5" />
+        <rect x="16" y="38" width="68" height="24" rx="5" fill="rgba(5,8,17,0.84)" stroke="#ffd166" stroke-width="2" />
+        <text x="50" y="55" text-anchor="middle" fill="#ffffff" font-family="Arial, sans-serif" font-weight="900" font-size="18">${code}</text>
+      </svg>
+    `;
+  }
 
   function computeOverall(attrs, position) {
     const { pace: p, shooting: s, passing: pa, dribbling: d, defending: de, physical: ph } = attrs;
@@ -41,26 +147,50 @@ const CareerEngine = (() => {
     return `$${Math.round(amount / 1000)}K`;
   }
 
-  function ensureV3State(state) {
+  function ensureV4State(state) {
+    // Hydrate Wikipedia official names, stadiums & colors onto clubs if not yet customized
+    state.clubs.forEach((c) => {
+      const wiki = WIKI_CLUB_BRANDING[c.club_id];
+      if (wiki && !c._wikiHydrated) {
+        c.name = wiki.wikiName;
+        c.stadium = wiki.stadium;
+        c.primary_color = wiki.primary;
+        c.secondary_color = wiki.secondary;
+        c.crest_pattern = wiki.pattern;
+        c._wikiHydrated = true;
+      }
+      if (!c.primary_color) c.primary_color = '#004C99';
+      if (!c.secondary_color) c.secondary_color = '#FFD100';
+      if (!c.crest_pattern) c.crest_pattern = 'stripes';
+      if (!c.tactics) {
+        c.tactics = {
+          buildUp: c.tactical_style || 'Balanced',
+          pressing: 'Mid-Block',
+          defLine: 'Normal',
+          tempo: 'Normal'
+        };
+      }
+    });
+
     if (!state.career.traits) state.career.traits = [];
     if (!state.season_player_stats) state.season_player_stats = {};
     if (!state.trophy_winners) {
       state.trophy_winners = [
-        { season: '2024-25', competition: 'Indian Super League', winner: 'Mohun Bagan SG' },
-        { season: '2024-25', competition: 'Premier League', winner: 'Manchester City' },
-        { season: '2024-25', competition: 'La Liga', winner: 'Real Madrid' }
+        { season: '2024-25', competition: 'Indian Super League', winner: 'Mohun Bagan Super Giant' },
+        { season: '2024-25', competition: 'Premier League', winner: 'Manchester City F.C.' },
+        { season: '2024-25', competition: 'La Liga', winner: 'Real Madrid CF' }
       ];
     }
     if (!state.golden_boot_history) {
       state.golden_boot_history = [
-        { season: '2024-25', league: 'Premier League', player: 'Erling Haaland', club: 'Manchester City', goals: 27 },
+        { season: '2024-25', league: 'Premier League', player: 'Erling Haaland', club: 'Manchester City F.C.', goals: 27 },
         { season: '2024-25', league: 'Indian Super League', player: 'Sunil Chhetri', club: 'Bengaluru FC', goals: 14 }
       ];
     }
     if (!state.ballon_dor_history) {
       state.ballon_dor_history = [
-        { year: '2025', winner: 'Jude Bellingham', club: 'Real Madrid', ovr: 90 },
-        { year: '2024', winner: 'Erling Haaland', club: 'Manchester City', ovr: 91 }
+        { year: '2025', winner: 'Jude Bellingham', club: 'Real Madrid CF', ovr: 90 },
+        { year: '2024', winner: 'Erling Haaland', club: 'Manchester City F.C.', ovr: 91 }
       ];
     }
     if (!state.pending_celebration) state.pending_celebration = null;
@@ -72,7 +202,7 @@ const CareerEngine = (() => {
   }
 
   function recordMatchPlayerStats(state, matchResult) {
-    ensureV3State(state);
+    ensureV4State(state);
     const allPlayed = [...matchResult.homeRoster, ...matchResult.awayRoster].filter((p) => p.minutesPlayed > 0);
     allPlayed.forEach((p) => {
       const clubObj = p.teamSide === 'home' ? matchResult.homeClub : matchResult.awayClub;
@@ -100,7 +230,7 @@ const CareerEngine = (() => {
   }
 
   function ensureSeasonFixtures(state) {
-    ensureV3State(state);
+    ensureV4State(state);
     const userClub = state.clubs.find((c) => c.club_id === state.career.current_club_id) || state.clubs[0];
     const leagueId = userClub.league_id;
 
@@ -149,7 +279,6 @@ const CareerEngine = (() => {
       }
     }
 
-    // Add Knockout Cup Semi-Final & Final fixtures
     const cupRivals = state.clubs.filter((c) => c.club_id !== userClub.club_id).sort(() => Math.random() - 0.5);
     if (cupRivals.length >= 2) {
       fixtures.push({
@@ -168,7 +297,6 @@ const CareerEngine = (() => {
       });
     }
 
-    // International fixture
     const userPlayer = state.players[state.career.player_id];
     const userNation = state.national_teams.find((n) => n.nation_id === (userPlayer?.nation_id || 'NAT_IND')) || state.national_teams[0];
     const rivalNation = state.national_teams.find((n) => n.nation_id !== userNation.nation_id) || state.national_teams[1];
@@ -335,7 +463,7 @@ const CareerEngine = (() => {
   }
 
   function processMatchResult(state, fixture, matchResult) {
-    ensureV3State(state);
+    ensureV4State(state);
     const career = state.career;
     const userP = state.players[career.player_id];
     const uStats = matchResult.userStats;
@@ -345,7 +473,6 @@ const CareerEngine = (() => {
     fixture.away_score = matchResult.stats.away.score;
     recordMatchPlayerStats(state, matchResult);
 
-    // Handle Cup Progression & Cup Celebration!
     if (fixture.is_cup) {
       const isUserHome = fixture.home_club_id === career.current_club_id;
       const userClubWon = isUserHome ? matchResult.homeWon : matchResult.awayWon;
@@ -374,7 +501,7 @@ const CareerEngine = (() => {
           icon: '🏆',
           title: 'CUP CHAMPIONS!',
           subtitle: `${clubObj.name} lift the Super Knockout Cup!`,
-          detail: `Captain & Star: ${userP.name} • Season ${career.current_season}`
+          detail: `Star Player: ${userP.name} • Season ${career.current_season}`
         };
       }
     } else if (!fixture.is_international) {
@@ -461,8 +588,8 @@ const CareerEngine = (() => {
   }
 
   function computeBallonDorStandings(state) {
-    ensureV3State(state);
-    const list = Object.values(state.players)
+    ensureV4State(state);
+    return Object.values(state.players)
       .filter((p) => !p.player_id.startsWith('PLR_DEPTH_'))
       .map((p) => {
         const s = state.season_player_stats[p.player_id] || { apps: 0, goals: 0, assists: 0, rating_sum: 0 };
@@ -481,17 +608,15 @@ const CareerEngine = (() => {
         };
       })
       .sort((a, b) => b.score - a.score);
-    return list;
   }
 
   function advanceToNextSeason(state) {
-    ensureV3State(state);
+    ensureV4State(state);
     const career = state.career;
     const userP = state.players[career.player_id];
     const userClub = state.clubs.find((c) => c.club_id === career.current_club_id);
     const leagueObj = userClub ? state.leagues.find((l) => l.league_id === userClub.league_id) : null;
 
-    // 1. Crown League Champion
     if (userClub && state.standings[userClub.league_id]) {
       const table = state.standings[userClub.league_id];
       const champRow = table[0];
@@ -517,7 +642,6 @@ const CareerEngine = (() => {
       }
     }
 
-    // 2. Crown Golden Boot Winner
     const scorers = Object.values(state.season_player_stats)
       .filter((s) => !userClub || s.league_id === userClub.league_id)
       .sort((a, b) => b.goals - a.goals || b.assists - a.assists);
@@ -539,7 +663,6 @@ const CareerEngine = (() => {
       }
     }
 
-    // 3. Crown Annual Ballon d'Or Winner
     const bdoTop = computeBallonDorStandings(state);
     const startYear = parseInt(career.current_season.split('-')[0], 10) || 2025;
     if (bdoTop[0]) {
@@ -553,13 +676,12 @@ const CareerEngine = (() => {
         state.pending_celebration = {
           icon: '🟡',
           title: "BALLON D'OR WINNER!",
-          subtitle: `${userP.name} is crowned the Best Footballer in the World!`,
+          subtitle: `${userP.name} is crowned Best Player in the World!`,
           detail: `${bdoTop[0].goals} Goals • ${bdoTop[0].assists} Assists • ${startYear + 1} Gala`
         };
       }
     }
 
-    // Reset for next season
     career.current_season = `${startYear + 1}-${String(startYear + 2).slice(-2)}`;
     career.current_week = 1;
     if (userP) {
@@ -617,7 +739,7 @@ const CareerEngine = (() => {
   }
 
   function unlockTrait(state, traitId) {
-    ensureV3State(state);
+    ensureV4State(state);
     const userP = state.players[state.career.player_id];
     if (state.career.traits.includes(traitId)) return false;
     state.career.traits.push(traitId);
@@ -765,13 +887,152 @@ const CareerEngine = (() => {
     ensureSeasonFixtures(state);
   }
 
+  // ==================== FULL CUSTOM DATABASE EDITOR METHODS ====================
+  function upsertCustomPlayer(state, payload) {
+    const isNew = !payload.player_id;
+    const pid = payload.player_id || `PLR_CUSTOM_${Date.now()}`;
+    const existing = state.players[pid] || {};
+    const attrs = {
+      pace: Math.max(1, Math.min(99, Number(payload.pace) || 70)),
+      shooting: Math.max(1, Math.min(99, Number(payload.shooting) || 70)),
+      passing: Math.max(1, Math.min(99, Number(payload.passing) || 70)),
+      dribbling: Math.max(1, Math.min(99, Number(payload.dribbling) || 70)),
+      defending: Math.max(1, Math.min(99, Number(payload.defending) || 60)),
+      physical: Math.max(1, Math.min(99, Number(payload.physical) || 70))
+    };
+    const pos = payload.position || 'ST';
+    const ovr = computeOverall(attrs, pos);
+
+    state.players[pid] = {
+      ...existing,
+      player_id: pid,
+      name: payload.name.trim() || 'Custom Star',
+      age: Number(payload.age) || 21,
+      nationality: payload.nationality || 'India',
+      club_id: payload.club_id,
+      position: pos,
+      attributes: attrs,
+      overall: ovr,
+      potential: Math.max(ovr, Number(payload.potential) || 88),
+      fitness: existing.fitness ?? 100,
+      morale: existing.morale ?? 80,
+      form: existing.form ?? 7.2,
+      source: 'Custom Editor'
+    };
+    state.players[pid].market_value = calculateMarketValue(state.players[pid]);
+
+    if (isNew && payload.club_id && state.lineups[payload.club_id]) {
+      state.lineups[payload.club_id].substitutes.unshift(pid);
+    }
+    return state.players[pid];
+  }
+
+  function upsertCustomClub(state, payload) {
+    const isNew = !payload.club_id;
+    const cid = payload.club_id || `CLB_CUSTOM_${Date.now()}`;
+    const existing = state.clubs.find((c) => c.club_id === cid);
+
+    const clubData = {
+      club_id: cid,
+      name: payload.name.trim() || 'Custom FC',
+      short_name: (payload.short_name || payload.name.slice(0, 3)).toUpperCase().slice(0, 4),
+      league_id: payload.league_id || 'LGE_IND_ISL',
+      country: payload.country || 'India',
+      stadium: payload.stadium || `${payload.name} Arena`,
+      rating: Math.max(40, Math.min(99, Number(payload.rating) || 72)),
+      formation: existing?.formation || '4-3-3',
+      tactical_style: existing?.tactical_style || 'Balanced',
+      primary_color: payload.primary_color || '#004C99',
+      secondary_color: payload.secondary_color || '#FFD100',
+      crest_pattern: payload.crest_pattern || 'stripes',
+      custom_logo: payload.custom_logo || existing?.custom_logo || null,
+      _wikiHydrated: true
+    };
+
+    if (existing) {
+      Object.assign(existing, clubData);
+    } else {
+      state.clubs.push(clubData);
+      // Generate starter squad for new custom club
+      const positions = ['GK', 'LB', 'CB', 'CB', 'RB', 'CDM', 'CM', 'CAM', 'LW', 'RW', 'ST', 'GK', 'CB', 'CM', 'LW', 'ST'];
+      const xi = [];
+      const subs = [];
+      positions.forEach((pos, idx) => {
+        const pid = `PLR_${cid}_${idx + 1}`;
+        const base = Math.max(50, clubData.rating - 2 + (idx % 4));
+        const attrs = { pace: base, shooting: base, passing: base, dribbling: base, defending: base, physical: base };
+        state.players[pid] = {
+          player_id: pid,
+          name: `${clubData.short_name} Player ${idx + 1}`,
+          age: 20 + (idx % 8),
+          nationality: clubData.country,
+          club_id: cid,
+          position: pos,
+          attributes: attrs,
+          overall: computeOverall(attrs, pos),
+          potential: base + 6,
+          fitness: 100,
+          morale: 75,
+          form: 7.0
+        };
+        if (idx < 11) xi.push(pid);
+        else subs.push(pid);
+      });
+      state.lineups[cid] = { club_id: cid, formation: '4-3-3', starting_xi: xi, substitutes: subs };
+    }
+
+    // Rebuild standings so new club appears in table
+    state.standings[clubData.league_id] = null;
+    ensureSeasonFixtures(state);
+    return clubData;
+  }
+
+  function upsertCustomLeagueOrCup(state, payload) {
+    if (payload.type === 'cup') {
+      const tid = payload.id || `TRP_CUSTOM_${Date.now()}`;
+      const existing = state.trophies.find((t) => t.trophy_id === tid);
+      if (existing) {
+        existing.name = payload.name;
+        existing.region = payload.country;
+        existing.prestige = Number(payload.reputation) || 80;
+      } else {
+        state.trophies.push({
+          trophy_id: tid,
+          name: payload.name,
+          region: payload.country || 'World',
+          prestige: Number(payload.reputation) || 85
+        });
+      }
+      return;
+    }
+
+    const lid = payload.id || `LGE_CUSTOM_${Date.now()}`;
+    const existing = state.leagues.find((l) => l.league_id === lid);
+    if (existing) {
+      existing.name = payload.name;
+      existing.country = payload.country;
+      existing.reputation = Number(payload.reputation) || 75;
+    } else {
+      state.leagues.push({
+        league_id: lid,
+        name: payload.name,
+        country: payload.country || 'India',
+        tier: 1,
+        reputation: Number(payload.reputation) || 80,
+        season: '2025-26'
+      });
+    }
+  }
+
   return {
+    FORMATION_COORDS,
     STAGES,
     TRAITS_CATALOG,
+    renderClubCrestHTML,
     computeOverall,
     calculateMarketValue,
     formatMoney,
-    ensureV3State,
+    ensureV4State,
     recordMatchPlayerStats,
     ensureSeasonFixtures,
     updateStanding,
@@ -785,7 +1046,10 @@ const CareerEngine = (() => {
     applyInterviewChoice,
     generateTransferOffers,
     acceptTransferOffer,
-    createCustomProtagonist
+    createCustomProtagonist,
+    upsertCustomPlayer,
+    upsertCustomClub,
+    upsertCustomLeagueOrCup
   };
 })();
 
@@ -794,13 +1058,13 @@ const CareerEngine = (() => {
  */
 const ManagerEngine = (() => {
   function ensureManagerState(state) {
-    CareerEngine.ensureV3State(state);
+    CareerEngine.ensureV4State(state);
     if (!state.manager) {
-      const defaultClub = state.clubs.find((c) => c.club_id === 'CLB_IND_CHENNAI') || state.clubs[0];
+      const defaultClub = state.clubs.find((c) => c.club_id === 'CLB_IND_MOHUN') || state.clubs[0];
       state.manager = {
         club_id: defaultClub.club_id,
-        budget: defaultClub.rating >= 85 ? 85000000 : defaultClub.rating >= 75 ? 25000000 : 4500000,
-        board_confidence: 75,
+        budget: defaultClub.rating >= 85 ? 85000000 : defaultClub.rating >= 75 ? 25000000 : 5500000,
+        board_confidence: 78,
         season: '2025-26',
         week: 1,
         wins: 0,
@@ -818,8 +1082,8 @@ const ManagerEngine = (() => {
     if (!club) return;
     state.manager = {
       club_id: club.club_id,
-      budget: club.rating >= 85 ? 85000000 : club.rating >= 75 ? 25000000 : 4500000,
-      board_confidence: 75,
+      budget: club.rating >= 85 ? 85000000 : club.rating >= 75 ? 25000000 : 5500000,
+      board_confidence: 78,
       season: '2025-26',
       week: 1,
       wins: 0,
@@ -871,7 +1135,6 @@ const ManagerEngine = (() => {
       }
     }
 
-    // Knockout Cup Semi-Final for Manager Mode
     const cupRival = state.clubs.find((c) => c.club_id !== club.club_id);
     if (cupRival) {
       list.push({
@@ -904,34 +1167,40 @@ const ManagerEngine = (() => {
     return next;
   }
 
-  function setTactics(state, formation, tacticalStyle) {
+  function setFullTactics(state, { formation, buildUp, pressing, defLine, tempo }) {
     const club = state.clubs.find((c) => c.club_id === state.manager.club_id);
     if (!club) return;
     club.formation = formation;
-    club.tactical_style = tacticalStyle;
+    club.tactical_style = buildUp;
+    club.tactics = { buildUp, pressing, defLine, tempo };
     if (state.lineups[club.club_id]) {
       state.lineups[club.club_id].formation = formation;
     }
   }
 
-  function swapPlayers(state, idA, idB) {
+  function swapAnySquadPlayers(state, idA, idB) {
     const clubId = state.manager.club_id;
     const lineup = state.lineups[clubId];
     if (!lineup || idA === idB) return false;
 
-    const xiIdxA = lineup.starting_xi.indexOf(idA);
-    const xiIdxB = lineup.starting_xi.indexOf(idB);
-    const subIdxA = lineup.substitutes.indexOf(idA);
-    const subIdxB = lineup.substitutes.indexOf(idB);
+    const xiA = lineup.starting_xi.indexOf(idA);
+    const xiB = lineup.starting_xi.indexOf(idB);
+    const subA = lineup.substitutes.indexOf(idA);
+    const subB = lineup.substitutes.indexOf(idB);
 
-    if (xiIdxA !== -1 && subIdxB !== -1) {
-      lineup.starting_xi[xiIdxA] = idB;
-      lineup.substitutes[subIdxB] = idA;
+    if (xiA !== -1 && xiB !== -1) {
+      // Swap two starters' positions on pitch
+      [lineup.starting_xi[xiA], lineup.starting_xi[xiB]] = [lineup.starting_xi[xiB], lineup.starting_xi[xiA]];
       return true;
     }
-    if (subIdxA !== -1 && xiIdxB !== -1) {
-      lineup.substitutes[subIdxA] = idB;
-      lineup.starting_xi[xiIdxB] = idA;
+    if (xiA !== -1 && subB !== -1) {
+      lineup.starting_xi[xiA] = idB;
+      lineup.substitutes[subB] = idA;
+      return true;
+    }
+    if (subA !== -1 && xiB !== -1) {
+      lineup.substitutes[subA] = idB;
+      lineup.starting_xi[xiB] = idA;
       return true;
     }
     return false;
@@ -1117,8 +1386,8 @@ const ManagerEngine = (() => {
     ensureManagerState,
     selectClub,
     getNextManagerFixture,
-    setTactics,
-    swapPlayers,
+    setFullTactics,
+    swapAnySquadPlayers,
     processManagerMatch,
     runTeamTraining,
     getTransferMarket,
