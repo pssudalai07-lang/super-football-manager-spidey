@@ -1,20 +1,28 @@
 /**
- * SUPER FOOTBALL MANAGER BY SPIDEY (v3.0)
- * 90-Minute Match Engine + Knockout Cup Tiebreakers + All-Players Individual Match Ratings
+ * SUPER FOOTBALL MANAGER BY SPIDEY (v4.0)
+ * Tactical Match Engine: Honors Build-Up Play, Pressing Intensity, Defensive Line & Tempo!
  */
 
 const MatchEngine = (() => {
-  const TACTIC_MODIFIERS = {
-    'Attacking': { atk: 1.15, def: 0.89, poss: 2 },
-    'Possession': { atk: 1.05, def: 1.04, poss: 7 },
-    'Counter-Attack': { atk: 1.09, def: 1.06, poss: -6 },
-    'Balanced': { atk: 1.00, def: 1.00, poss: 0 }
+  const BUILDUP_MODS = {
+    'Balanced': { atk: 1.00, def: 1.00, poss: 0 },
+    'Tiki-Taka': { atk: 1.05, def: 1.03, poss: 9 },
+    'Wing Play': { atk: 1.12, def: 0.96, poss: 2 },
+    'Counter-Attack': { atk: 1.10, def: 1.06, poss: -7 },
+    'Long Ball': { atk: 1.07, def: 0.98, poss: -5 }
+  };
+
+  const PRESSING_MODS = {
+    'Mid-Block': { def: 1.00, drain: 0.14 },
+    'Low Block': { def: 1.09, drain: 0.11 },
+    'High Press': { def: 1.06, drain: 0.18 },
+    'Gegenpress': { def: 1.12, drain: 0.22 }
   };
 
   const FOCUS_MODIFIERS = {
     balanced: { shotMult: 1.0, passMult: 1.0, defMult: 1.0, staminaDrain: 0.14 },
-    attack: { shotMult: 1.40, passMult: 0.92, defMult: 0.82, staminaDrain: 0.17 },
-    playmaker: { shotMult: 0.95, passMult: 1.38, defMult: 0.95, staminaDrain: 0.15 },
+    attack: { shotMult: 1.42, passMult: 0.92, defMult: 0.82, staminaDrain: 0.17 },
+    playmaker: { shotMult: 0.95, passMult: 1.40, defMult: 0.95, staminaDrain: 0.15 },
     workrate: { shotMult: 0.90, passMult: 1.05, defMult: 1.42, staminaDrain: 0.20 }
   };
 
@@ -71,6 +79,20 @@ const MatchEngine = (() => {
     };
   }
 
+  function getClubTactics(club) {
+    const t = club.tactics || {};
+    const buildUp = BUILDUP_MODS[t.buildUp || club.tactical_style] || BUILDUP_MODS.Balanced;
+    const press = PRESSING_MODS[t.pressing] || PRESSING_MODS['Mid-Block'];
+    const lineMod = t.defLine === 'High Line' ? 1.04 : t.defLine === 'Deep' ? 0.96 : 1.0;
+    const tempoMod = t.tempo === 'Fast' ? 1.06 : t.tempo === 'Patient' ? 0.96 : 1.0;
+    return {
+      atk: buildUp.atk * lineMod * tempoMod,
+      def: press.def * (t.defLine === 'Deep' ? 1.05 : 1.0),
+      poss: buildUp.poss,
+      drain: press.drain
+    };
+  }
+
   function simulateMatch({
     homeClub,
     awayClub,
@@ -85,8 +107,8 @@ const MatchEngine = (() => {
     competition = 'League Match'
   }) {
     const focusMod = FOCUS_MODIFIERS[userFocus] || FOCUS_MODIFIERS.balanced;
-    const homeTac = TACTIC_MODIFIERS[homeClub.tactical_style] || TACTIC_MODIFIERS.Balanced;
-    const awayTac = TACTIC_MODIFIERS[awayClub.tactical_style] || TACTIC_MODIFIERS.Balanced;
+    const homeTac = getClubTactics(homeClub);
+    const awayTac = getClubTactics(awayClub);
 
     const homeRoster = [
       ...homeStarters.map((p) => createPlayerMatchState(p, true, 'home', p.player_id === userPlayerId)),
@@ -169,8 +191,8 @@ const MatchEngine = (() => {
       teamSide: 'home',
       ballX: 50,
       ballY: 50,
-      zoneLabel: 'Center Circle',
-      text: `Kick-off! ${homeClub.name} vs ${awayClub.name} (${competition}).`,
+      zoneLabel: 'Kick-Off',
+      text: `Kick-off at ${homeClub.stadium || 'Stadium'}! ${homeClub.name} vs ${awayClub.name} (${competition}).`,
       isUserEvent: false
     });
 
@@ -178,16 +200,19 @@ const MatchEngine = (() => {
       const homeActive = homeRoster.filter((p) => p.onPitch);
       const awayActive = awayRoster.filter((p) => p.onPitch);
 
-      [...homeActive, ...awayActive].forEach((p) => {
+      homeActive.forEach((p) => {
         p.minutesPlayed += 1;
-        const drain = p.isUser ? focusMod.staminaDrain : 0.14;
-        p.fitness = Math.max(30, p.fitness - drain);
+        p.fitness = Math.max(30, p.fitness - (p.isUser ? focusMod.staminaDrain : homeTac.drain));
+      });
+      awayActive.forEach((p) => {
+        p.minutesPlayed += 1;
+        p.fitness = Math.max(30, p.fitness - (p.isUser ? focusMod.staminaDrain : awayTac.drain));
       });
 
       const homeMid = homeActive.reduce((s, p) => s + (p.attributes.passing + p.attributes.dribbling) / 2, 0) / Math.max(1, homeActive.length);
       const awayMid = awayActive.reduce((s, p) => s + (p.attributes.passing + p.attributes.dribbling) / 2, 0) / Math.max(1, awayActive.length);
 
-      const homePossWeight = Math.max(25, 52 + (homeMid - awayMid) * 0.9 + homeTac.poss - awayTac.poss);
+      const homePossWeight = Math.max(24, Math.min(76, 52 + (homeMid - awayMid) * 0.9 + homeTac.poss - awayTac.poss));
       const isHomeAttack = Math.random() * 100 < homePossWeight;
       const side = isHomeAttack ? 'home' : 'away';
       const atkTeam = isHomeAttack ? homeActive : awayActive;
@@ -211,11 +236,11 @@ const MatchEngine = (() => {
             ballY: randInt(32, 68),
             zoneLabel: 'Penalty Area!',
             title: `${min}' KEY MOMENT — ${userOnPitch.name}!`,
-            desc: `You control the ball inside the penalty box! Choose your action:`,
+            desc: `You receive the ball in the box with space to shoot or pass:`,
             options: [
-              { id: 'finesse', label: 'Finesse Shot' },
+              { id: 'finesse', label: 'Finesse Curler' },
               { id: 'power', label: 'Power Strike' },
-              { id: 'pass', label: 'Square Pass' }
+              { id: 'pass', label: 'Square Assist' }
             ],
             isUserEvent: true
           });
@@ -228,13 +253,13 @@ const MatchEngine = (() => {
             teamSide: managedSide,
             ballX: managedSide === 'home' ? 72 : 28,
             ballY: 50,
-            zoneLabel: 'Tactical Call',
-            title: `${min}' TOUCHLINE CALL — ${mClub.name}`,
-            desc: `Score is ${stats.home.score}-${stats.away.score}. Issue a tactical instruction:`,
+            zoneLabel: 'Touchline Call',
+            title: `${min}' MANAGER CALL — ${mClub.name}`,
+            desc: `Score is ${stats.home.score}-${stats.away.score}. Issue a tactical touchline order:`,
             options: [
               { id: 'overload', label: 'Overload Box' },
               { id: 'counter', label: 'Fast Counter' },
-              { id: 'press', label: 'High Press' }
+              { id: 'press', label: 'Gegenpress' }
             ],
             isUserEvent: true
           });
@@ -258,7 +283,7 @@ const MatchEngine = (() => {
 
       const atkPower = (atkTeam.reduce((s, p) => s + p.overall, 0) / atkTeam.length) * atkTac.atk;
       const defPower = (defTeam.reduce((s, p) => s + p.overall, 0) / defTeam.length) * defTac.def;
-      const chanceProb = Math.min(0.38, Math.max(0.14, 0.24 + (atkPower - defPower) * 0.004));
+      const chanceProb = Math.min(0.39, Math.max(0.14, 0.24 + (atkPower - defPower) * 0.0042));
 
       if (Math.random() < chanceProb) {
         const shooter = pickWeighted(atkTeam, (p) => {
@@ -280,14 +305,14 @@ const MatchEngine = (() => {
         shooter.shots += 1;
         stats[side].shots += 1;
 
-        const onTargetProb = Math.min(0.75, 0.34 + (shooter.attributes.shooting / 240));
+        const onTargetProb = Math.min(0.76, 0.34 + (shooter.attributes.shooting / 240));
         if (Math.random() < onTargetProb) {
           shooter.shotsOnTarget += 1;
           stats[side].shotsOnTarget += 1;
           shooter.rating = clampRating(shooter.rating + 0.12);
 
           const oppGk = defTeam.find((p) => p.position === 'GK') || defTeam[0];
-          const goalProb = Math.min(0.55, Math.max(0.16, 0.31 + (shooter.attributes.shooting - (oppGk?.overall || 65)) * 0.005));
+          const goalProb = Math.min(0.56, Math.max(0.16, 0.31 + (shooter.attributes.shooting - (oppGk?.overall || 65)) * 0.005));
 
           if (Math.random() < goalProb) {
             stats[side].score += 1;
@@ -302,7 +327,7 @@ const MatchEngine = (() => {
               teamSide: side,
               ballX: side === 'home' ? 95 : 5,
               ballY: 50,
-              zoneLabel: 'GOAL!',
+              zoneLabel: 'GOOOAL!',
               playerId: shooter.player_id,
               playerName: shooter.name,
               assistName: assister.name,
@@ -319,8 +344,8 @@ const MatchEngine = (() => {
                 teamSide: side,
                 ballX: side === 'home' ? 88 : 12,
                 ballY: randInt(28, 72),
-                zoneLabel: 'Shot Saved',
-                text: `${shooter.name} (${atkClub.short_name}) tests ${oppGk.name} with a sharp shot!`,
+                zoneLabel: 'Saved!',
+                text: `${shooter.name} (${atkClub.short_name}) forces a diving save from ${oppGk.name}!`,
                 isUserEvent: shooter.isUser || assister.isUser
               });
             }
@@ -333,8 +358,8 @@ const MatchEngine = (() => {
           teamSide: side,
           ballX: side === 'home' ? randInt(48, 76) : randInt(24, 52),
           ballY: randInt(20, 80),
-          zoneLabel: `${atkClub.short_name} Attack`,
-          text: `${atkClub.name} move the ball smoothly through midfield.`,
+          zoneLabel: `${atkClub.short_name} Build-up`,
+          text: `${atkClub.name} probe the defense with crisp passing.`,
           isUserEvent: false
         });
       }
@@ -362,8 +387,8 @@ const MatchEngine = (() => {
               teamSide: defSide,
               ballX: 50,
               ballY: randInt(25, 75),
-              zoneLabel: 'Booking',
-              text: `Yellow Card: ${tackler.name} (${defClub.short_name}) booked for a late tackle.`,
+              zoneLabel: 'Yellow Card',
+              text: `Yellow Card: ${tackler.name} (${defClub.short_name}) booked for a tactical foul.`,
               isUserEvent: tackler.isUser
             });
           }
@@ -380,7 +405,6 @@ const MatchEngine = (() => {
       }
     }
 
-    // Knockout Cup Penalty Shootout if tied after 90'
     if (isKnockout && stats.home.score === stats.away.score) {
       let homePens = randInt(3, 5);
       let awayPens = randInt(3, 5);
@@ -397,7 +421,7 @@ const MatchEngine = (() => {
         ballX: 50,
         ballY: 50,
         zoneLabel: 'Penalties!',
-        text: `PENALTY SHOOTOUT! ${penWinner} win ${homePens}-${awayPens} on penalties!`,
+        text: `PENALTY SHOOTOUT! ${penWinner} triumph ${homePens}-${awayPens} on penalties!`,
         isUserEvent: true
       });
     }
@@ -413,7 +437,6 @@ const MatchEngine = (() => {
 
     [...homeRoster, ...awayRoster].forEach((p) => {
       if (p.minutesPlayed > 0) {
-        // Add subtle realistic variance so every player's rating is distinct
         p.rating = clampRating(p.rating + rand(-0.18, 0.22));
         if ((p.teamSide === 'home' && homeWon) || (p.teamSide === 'away' && awayWon)) p.rating = clampRating(p.rating + 0.35);
         else if ((p.teamSide === 'home' && awayWon) || (p.teamSide === 'away' && homeWon)) p.rating = clampRating(p.rating - 0.25);
@@ -457,7 +480,7 @@ const MatchEngine = (() => {
           u.rating = clampRating(u.rating + 0.65);
           return {
             scoredSide: side,
-            text: `BRILLIANT ASSIST! ${u.name} squares the ball across goal for a tap-in! [${result.stats.home.score}-${result.stats.away.score}]`
+            text: `WORLD-CLASS ASSIST! ${u.name} squares the ball for a clinical tap-in! [${result.stats.home.score}-${result.stats.away.score}]`
           };
         } else {
           u.goals += 1;
@@ -466,14 +489,14 @@ const MatchEngine = (() => {
           u.rating = clampRating(u.rating + 0.95);
           return {
             scoredSide: side,
-            text: `WHAT A FINISH! ${u.name} buries the ${choiceId === 'finesse' ? 'curled finesse shot' : 'thunderous strike'}! [${result.stats.home.score}-${result.stats.away.score}]`
+            text: `GOLAZO! ${u.name} unleashes a ${choiceId === 'finesse' ? 'curled top-corner finesse' : 'rocket strike'}! [${result.stats.home.score}-${result.stats.away.score}]`
           };
         }
       } else {
         u.shots += 1;
         return {
           scoredSide: null,
-          text: `Saved! The keeper denies ${u.name}'s ${choiceId} attempt!`
+          text: `What a stop! The goalkeeper parries ${u.name}'s ${choiceId} effort!`
         };
       }
     }
@@ -487,12 +510,12 @@ const MatchEngine = (() => {
       star.rating = clampRating(star.rating + 0.8);
       return {
         scoredSide: side,
-        text: `TACTICAL MASTERSTROKE! Your ${choiceId.toUpperCase()} call unlocks the defense and ${star.name} scores! [${result.stats.home.score}-${result.stats.away.score}]`
+        text: `TACTICAL MASTERCLASS! Your ${choiceId.toUpperCase()} call breaks the lines and ${star.name} buries it! [${result.stats.home.score}-${result.stats.away.score}]`
       };
     }
     return {
       scoredSide: null,
-      text: `${club.name} push forward with your ${choiceId} call, winning a corner.`
+      text: `${club.name} surge forward on your ${choiceId} order, winning a dangerous corner.`
     };
   }
 
