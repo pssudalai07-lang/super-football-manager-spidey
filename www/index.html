@@ -11,9 +11,11 @@
     <div class="header-top">
       <div>
         <div class="brand-title">SUPER FOOTBALL MANAGER</div>
-        <div class="brand-sub">BY SPIDEY • PRO AWARDS EDITION</div>
+        <div class="brand-sub">BY SPIDEY • ULTIMATE BROADCAST EDITION</div>
       </div>
-      <span class="free-badge">100% FREE</span>
+      <div class="header-badges">
+        <button id="btn-toggle-sfx" class="sfx-btn">🔊 SFX ON</button>
+      </div>
     </div>
     <div class="mode-switch">
       <button id="mode-btn-manager" class="mode-btn active">👔 TEAM MANAGER</button>
@@ -26,74 +28,125 @@
   <main class="container">
     <!-- ==================== VIEW A: TEAM MANAGER MODE ==================== -->
     <div id="manager-view" class="mode-view active">
+      <!-- MGR TAB 1: CLUB HUB -->
       <section id="mgr-tab-hub" class="tab-panel active">
-        <div class="card player-hero">
-          <div class="ovr-badge" style="background: linear-gradient(135deg, #38bdf8, #2563eb); color:#fff;">
-            <span id="mgr-club-ovr" class="num">68</span>
-            <span class="pos">CLUB</span>
+        <div class="fut-card">
+          <div class="fut-top">
+            <div class="fut-rating-col">
+              <div id="mgr-club-ovr" class="fut-ovr">72</div>
+              <div class="fut-pos">CLUB</div>
+            </div>
+            <div id="mgr-club-crest" class="club-crest-wrap"></div>
+            <div class="player-meta" style="flex:1;">
+              <h2 id="mgr-club-name" style="font-size:16px;font-weight:900;">Mohun Bagan Super Giant</h2>
+              <p id="mgr-league-name" style="font-size:11px;color:var(--accent-secondary);">Indian Super League</p>
+              <p id="mgr-stadium-name" style="font-size:10px;color:var(--text-muted);">🏟️ Salt Lake Stadium</p>
+              <span id="mgr-record" class="stage-pill">W0 • D0 • L0</span>
+            </div>
+            <button id="btn-mgr-change-club" class="btn btn-secondary btn-sm">Switch</button>
           </div>
-          <div class="player-meta" style="flex:1;">
-            <h2 id="mgr-club-name">Chennaiyin FC</h2>
-            <p id="mgr-league-name">Indian Super League</p>
-            <span id="mgr-record" class="stage-pill">W0 • D0 • L0</span>
-          </div>
-          <button id="btn-mgr-change-club" class="btn btn-secondary btn-sm">Switch Club</button>
         </div>
 
         <div class="kpi-grid" style="grid-template-columns: repeat(3, 1fr);">
-          <div class="kpi-box"><div id="mgr-budget" class="kpi-val" style="color:var(--accent-primary);">$4.5M</div><div class="kpi-lbl">Budget</div></div>
-          <div class="kpi-box"><div id="mgr-board" class="kpi-val">75%</div><div class="kpi-lbl">Board Trust</div></div>
+          <div class="kpi-box"><div id="mgr-budget" class="kpi-val" style="color:var(--accent-primary);">$5.5M</div><div class="kpi-lbl">Budget</div></div>
+          <div class="kpi-box"><div id="mgr-board" class="kpi-val">78%</div><div class="kpi-lbl">Board Trust</div></div>
           <div class="kpi-box"><div id="mgr-season-wk" class="kpi-val">Wk 1</div><div class="kpi-lbl">Season</div></div>
         </div>
 
         <div class="card">
-          <div class="card-title"><span>Next Matchday</span><span>League & Cup</span></div>
+          <div class="card-title"><span>Broadcast Matchday</span><span>League & Cup</span></div>
           <div id="mgr-next-fixture" style="margin-bottom: 10px; font-size: 14px; font-weight: 800;">Loading...</div>
-          <button id="btn-mgr-play" class="btn btn-primary">MANAGE MATCHDAY (LIVE 2D SIM)</button>
+          <button id="btn-mgr-play" class="btn btn-primary">PLAY MATCHDAY (LIVE 2D BROADCAST)</button>
         </div>
 
         <div class="card">
-          <div class="card-title"><span>Club Training Ground</span></div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div class="card-title"><span>Training Center</span></div>
+          <div class="grid-2">
             <button id="btn-mgr-train-tactics" class="btn btn-secondary">Tactical Drill (+Form)</button>
             <button id="btn-mgr-train-rest" class="btn btn-gold">Squad Recovery (+Fit)</button>
           </div>
         </div>
       </section>
 
+      <!-- MGR TAB 2: VISUAL PITCH TACTICS & SQUAD -->
       <section id="mgr-tab-squad" class="tab-panel">
         <div class="card">
-          <div class="card-title"><span>Team Tactics & Formation</span></div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-            <select id="mgr-formation" style="padding:9px;border-radius:8px;background:#09101f;color:#fff;border:1px solid var(--border-subtle);">
-              <option value="4-3-3">4-3-3 Attack</option>
-              <option value="4-2-3-1">4-2-3-1 Control</option>
-              <option value="4-4-2">4-4-2 Classic</option>
-              <option value="3-5-2">3-5-2 Wingbacks</option>
-            </select>
-            <select id="mgr-style" style="padding:9px;border-radius:8px;background:#09101f;color:#fff;border:1px solid var(--border-subtle);">
-              <option value="Balanced">Balanced</option>
-              <option value="Attacking">Attacking</option>
-              <option value="Possession">Possession</option>
-              <option value="Counter-Attack">Counter-Attack</option>
-            </select>
+          <div class="card-title"><span>Interactive Tactics Pitch</span><span style="color:var(--accent-gold);">Tap 2 Players to Swap</span></div>
+          <div id="visual-tactics-pitch" class="tactics-pitch">
+            <div class="tp-halfway"></div>
+            <div class="tp-circle"></div>
+            <div class="tp-box-top"></div>
+            <div class="tp-box-bot"></div>
+            <div id="pitch-nodes-layer"></div>
           </div>
-          <button id="btn-save-tactics" class="btn btn-primary btn-sm" style="width:100%;">Apply Tactics</button>
+
+          <div class="card-title" style="margin-top:6px;"><span>Substitutes Bench (Tap to Swap with XI)</span></div>
+          <div id="mgr-bench-list"></div>
         </div>
 
         <div class="card">
-          <div class="card-title"><span>Starting XI (Tap 1 Starter + 1 Sub to Swap)</span></div>
-          <div id="mgr-xi-list"></div>
-          <div class="card-title" style="margin-top:12px;"><span>Substitutes Bench</span></div>
-          <div id="mgr-bench-list"></div>
+          <div class="card-title"><span>Manager Tactical Instructions</span></div>
+          <div class="grid-2" style="margin-bottom:8px;">
+            <div class="form-group" style="margin:0;">
+              <label>Formation</label>
+              <select id="mgr-formation">
+                <option value="4-3-3">4-3-3 Holding</option>
+                <option value="4-2-3-1">4-2-3-1 Wide</option>
+                <option value="4-4-2">4-4-2 Flat</option>
+                <option value="3-5-2">3-5-2 Attacking</option>
+                <option value="5-3-2">5-3-2 Counter</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label>Build-Up Play</label>
+              <select id="mgr-buildup">
+                <option value="Balanced">Balanced</option>
+                <option value="Tiki-Taka">Tiki-Taka (Short)</option>
+                <option value="Wing Play">Wing Play</option>
+                <option value="Counter-Attack">Counter-Attack</option>
+                <option value="Long Ball">Direct Long Ball</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-3" style="margin-bottom:10px;">
+            <div class="form-group" style="margin:0;">
+              <label>Pressing</label>
+              <select id="mgr-pressing">
+                <option value="Mid-Block">Mid-Block</option>
+                <option value="Low Block">Low Block</option>
+                <option value="High Press">High Press</option>
+                <option value="Gegenpress">Gegenpress</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label>Def. Line</label>
+              <select id="mgr-defline">
+                <option value="Normal">Normal</option>
+                <option value="Deep">Deep</option>
+                <option value="High Line">High Line</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0;">
+              <label>Tempo</label>
+              <select id="mgr-tempo">
+                <option value="Normal">Normal</option>
+                <option value="Patient">Patient</option>
+                <option value="Fast">Fast</option>
+              </select>
+            </div>
+          </div>
+
+          <button id="btn-save-tactics" class="btn btn-primary">Apply Tactical Blueprint</button>
         </div>
       </section>
 
+      <!-- MGR TAB 3: TRANSFER MARKET -->
       <section id="mgr-tab-market" class="tab-panel">
         <div class="card">
           <div class="card-title">
-            <span>Scouting & Signings</span>
-            <select id="mgr-market-filter" style="padding:4px 8px;border-radius:6px;background:#09101f;color:#fff;border:1px solid var(--border-subtle);font-size:11px;">
+            <span>Global Transfer Hub</span>
+            <select id="mgr-market-filter" style="padding:4px 8px;border-radius:6px;background:#060b16;color:#fff;border:1px solid var(--border-subtle);font-size:11px;">
               <option value="ALL">All Positions</option>
               <option value="ST">ST</option>
               <option value="RW">RW</option>
@@ -113,9 +166,9 @@
         </div>
       </section>
 
-      <!-- MGR TAB 4: TABLE, GOLDEN BOOT, WORLD RANKINGS & BALLON D'OR -->
+      <!-- MGR TAB 4: AWARDS, TABLE, GOLDEN BOOT, WORLD RANKINGS & BALLON D'OR -->
       <section id="mgr-tab-table" class="tab-panel">
-        <div class="subtab-bar" data-group="mgr">
+        <div class="subtab-bar">
           <button class="subtab-btn active" data-pane="mgr-pane-table">Table</button>
           <button class="subtab-btn" data-pane="mgr-pane-boot">Golden Boot</button>
           <button class="subtab-btn" data-pane="mgr-pane-world">World Rank</button>
@@ -176,18 +229,30 @@
     <!-- ==================== VIEW B: PLAYER CAREER MODE ==================== -->
     <div id="player-view" class="mode-view">
       <section id="plr-tab-home" class="tab-panel active">
-        <div class="card player-hero">
-          <div class="ovr-badge">
-            <span id="plr-ovr" class="num">70</span>
-            <span id="plr-pos" class="pos">CAM</span>
+        <!-- EA FC FUT Style Player Card -->
+        <div class="fut-card">
+          <div class="fut-top">
+            <div class="fut-rating-col">
+              <div id="plr-ovr" class="fut-ovr">70</div>
+              <div id="plr-pos" class="fut-pos">CAM</div>
+            </div>
+            <div id="plr-club-crest" class="club-crest-wrap"></div>
+            <div class="player-meta" style="flex:1;">
+              <h2 id="plr-name" style="font-size:17px;font-weight:900;">Spidey</h2>
+              <p id="plr-club" style="font-size:11px;color:var(--accent-secondary);">Chennaiyin FC • Age 18</p>
+              <span id="plr-stage" class="stage-pill">Youth Prospect</span>
+              <span id="plr-value" class="stage-pill" style="background:rgba(0,245,155,0.16);color:var(--accent-primary);">Val: $1.2M</span>
+            </div>
+            <button id="btn-open-creator" class="btn btn-secondary btn-sm">Edit Pro</button>
           </div>
-          <div class="player-meta" style="flex:1;">
-            <h2 id="plr-name">Spidey</h2>
-            <p id="plr-club">Chennaiyin FC • Age 18 • India</p>
-            <span id="plr-stage" class="stage-pill">Youth Prospect</span>
-            <span id="plr-value" class="stage-pill" style="background:rgba(0,230,118,0.16);color:var(--accent-primary);">Val: $1.2M</span>
+          <div class="fut-stats-strip">
+            <div class="fut-stat-cell"><strong id="fut-pac">71</strong><span>PAC</span></div>
+            <div class="fut-stat-cell"><strong id="fut-sho">67</strong><span>SHO</span></div>
+            <div class="fut-stat-cell"><strong id="fut-pas">72</strong><span>PAS</span></div>
+            <div class="fut-stat-cell"><strong id="fut-dri">74</strong><span>DRI</span></div>
+            <div class="fut-stat-cell"><strong id="fut-def">44</strong><span>DEF</span></div>
+            <div class="fut-stat-cell"><strong id="fut-phy">61</strong><span>PHY</span></div>
           </div>
-          <button id="btn-open-creator" class="btn btn-secondary btn-sm">Edit Pro</button>
         </div>
 
         <div class="kpi-grid">
@@ -203,7 +268,7 @@
             <span id="season-week-label">2025-26 • Week 1</span>
           </div>
           <div id="next-match-preview" style="margin-bottom: 10px; font-size: 14px; font-weight: 800;">Loading...</div>
-          <button id="btn-go-match" class="btn btn-primary">PLAY MATCHDAY (LIVE 2D SIM)</button>
+          <button id="btn-go-match" class="btn btn-primary">PLAY MATCHDAY (LIVE 2D BROADCAST)</button>
         </div>
 
         <div class="card">
@@ -239,7 +304,7 @@
 
         <div class="card">
           <div class="card-title"><span>Weekly Drills</span></div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div class="grid-2">
             <button class="btn btn-secondary drill-btn" data-drill="finishing">Finishing</button>
             <button class="btn btn-secondary drill-btn" data-drill="playmaking">Playmaking</button>
             <button class="btn btn-secondary drill-btn" data-drill="speed">Pace & Dribble</button>
@@ -272,9 +337,8 @@
         </div>
       </section>
 
-      <!-- PLR TAB 4: TABLE, GOLDEN BOOT, WORLD RANKINGS & BALLON D'OR -->
       <section id="plr-tab-league" class="tab-panel">
-        <div class="subtab-bar" data-group="plr">
+        <div class="subtab-bar">
           <button class="subtab-btn active" data-pane="plr-pane-table">Table</button>
           <button class="subtab-btn" data-pane="plr-pane-boot">Golden Boot</button>
           <button class="subtab-btn" data-pane="plr-pane-world">World Rank</button>
@@ -283,7 +347,7 @@
 
         <div id="plr-pane-table" class="subtab-pane active">
           <div class="card">
-            <div class="card-title"><span id="league-table-title">Standings</span><span id="db-meta-label">DB v3.0</span></div>
+            <div class="card-title"><span id="league-table-title">Standings</span><span id="db-meta-label">DB v4.0</span></div>
             <div style="overflow-x:auto;">
               <table class="league-table">
                 <thead><tr><th>#</th><th>Club</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>PTS</th></tr></thead>
@@ -295,7 +359,6 @@
             <div class="card-title"><span>Trophies & Achievements</span></div>
             <div id="achievements-list" style="font-size: 12px;"></div>
           </div>
-          <button id="btn-reset-career" class="btn btn-danger" style="margin-bottom: 16px;">Reset All Game Saves</button>
         </div>
 
         <div id="plr-pane-boot" class="subtab-pane">
@@ -332,27 +395,146 @@
         </div>
       </section>
     </div>
+
+    <!-- ==================== SHARED CUSTOM EDITOR STUDIO (TAB 5) ==================== -->
+    <section id="shared-tab-editor" class="tab-panel">
+      <div class="card" style="border-color: rgba(0, 212, 255, 0.35);">
+        <div class="card-title">
+          <span style="color:var(--accent-secondary);">🛠️ Custom Database Creator Studio</span>
+          <span>Edit Everything</span>
+        </div>
+
+        <div class="subtab-bar" style="grid-template-columns: repeat(3, 1fr);">
+          <button class="subtab-btn active" data-pane="ed-pane-players">Players</button>
+          <button class="subtab-btn" data-pane="ed-pane-clubs">Clubs & Logos</button>
+          <button class="subtab-btn" data-pane="ed-pane-leagues">Leagues & Cups</button>
+        </div>
+
+        <!-- EDITOR 1: PLAYERS -->
+        <div id="ed-pane-players" class="subtab-pane active">
+          <div class="form-group">
+            <label>Select Player to Edit (or Create New)</label>
+            <select id="ed-plr-select"></select>
+          </div>
+          <div class="grid-2">
+            <div class="form-group"><label>Full Name</label><input id="ed-plr-name" type="text" /></div>
+            <div class="form-group"><label>Club</label><select id="ed-plr-club"></select></div>
+          </div>
+          <div class="grid-3">
+            <div class="form-group"><label>Pos</label>
+              <select id="ed-plr-pos">
+                <option value="ST">ST</option><option value="LW">LW</option><option value="RW">RW</option>
+                <option value="CAM">CAM</option><option value="CM">CM</option><option value="CDM">CDM</option>
+                <option value="CB">CB</option><option value="LB">LB</option><option value="RB">RB</option><option value="GK">GK</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Age</label><input id="ed-plr-age" type="number" min="16" max="45" /></div>
+            <div class="form-group"><label>Potential</label><input id="ed-plr-pot" type="number" min="50" max="99" /></div>
+          </div>
+          <div class="grid-3">
+            <div class="form-group"><label>Pace</label><input id="ed-plr-pac" type="number" min="1" max="99" /></div>
+            <div class="form-group"><label>Shooting</label><input id="ed-plr-sho" type="number" min="1" max="99" /></div>
+            <div class="form-group"><label>Passing</label><input id="ed-plr-pas" type="number" min="1" max="99" /></div>
+          </div>
+          <div class="grid-3">
+            <div class="form-group"><label>Dribbling</label><input id="ed-plr-dri" type="number" min="1" max="99" /></div>
+            <div class="form-group"><label>Defending</label><input id="ed-plr-def" type="number" min="1" max="99" /></div>
+            <div class="form-group"><label>Physical</label><input id="ed-plr-phy" type="number" min="1" max="99" /></div>
+          </div>
+          <button id="btn-ed-save-player" class="btn btn-primary">Save Player Changes</button>
+        </div>
+
+        <!-- EDITOR 2: CLUBS & LOGOS -->
+        <div id="ed-pane-clubs" class="subtab-pane">
+          <div class="form-group">
+            <label>Select Club to Edit (or Create New Club)</label>
+            <select id="ed-clb-select"></select>
+          </div>
+          <div class="grid-2">
+            <div class="form-group"><label>Official Club Name</label><input id="ed-clb-name" type="text" /></div>
+            <div class="form-group"><label>Short Code (3-4 letters)</label><input id="ed-clb-short" type="text" maxlength="4" /></div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group"><label>Stadium Name</label><input id="ed-clb-stadium" type="text" /></div>
+            <div class="form-group"><label>League</label><select id="ed-clb-league"></select></div>
+          </div>
+          <div class="grid-3">
+            <div class="form-group"><label>Rating</label><input id="ed-clb-rating" type="number" min="40" max="99" /></div>
+            <div class="form-group"><label>Color 1</label><input id="ed-clb-c1" type="color" value="#004C99" style="height:36px;padding:2px;" /></div>
+            <div class="form-group"><label>Color 2</label><input id="ed-clb-c2" type="color" value="#FFD100" style="height:36px;padding:2px;" /></div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group">
+              <label>Crest Pattern</label>
+              <select id="ed-clb-pattern">
+                <option value="stripes">Vertical Stripes</option>
+                <option value="halves">Split Halves</option>
+                <option value="sash">Diagonal Sash</option>
+                <option value="solid">Classic Solid</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Upload Real Logo (Phone Gallery)</label>
+              <input id="ed-clb-logo-file" type="file" accept="image/*" style="font-size:11px;padding:6px;" />
+            </div>
+          </div>
+          <button id="btn-ed-save-club" class="btn btn-primary">Save Club & Crest</button>
+        </div>
+
+        <!-- EDITOR 3: LEAGUES & TOURNAMENTS -->
+        <div id="ed-pane-leagues" class="subtab-pane">
+          <div class="form-group">
+            <label>Select League / Tournament to Edit (or Create New)</label>
+            <select id="ed-lge-select"></select>
+          </div>
+          <div class="grid-2">
+            <div class="form-group"><label>Type</label>
+              <select id="ed-lge-type">
+                <option value="league">League Competition</option>
+                <option value="cup">Knockout Tournament / Cup</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Country / Region</label><input id="ed-lge-country" type="text" value="India" /></div>
+          </div>
+          <div class="grid-2">
+            <div class="form-group"><label>Competition Name</label><input id="ed-lge-name" type="text" /></div>
+            <div class="form-group"><label>Prestige Rating (1-100)</label><input id="ed-lge-rep" type="number" min="1" max="100" value="80" /></div>
+          </div>
+          <button id="btn-ed-save-league" class="btn btn-primary">Save League / Tournament</button>
+        </div>
+      </div>
+
+      <button id="btn-reset-career" class="btn btn-danger" style="margin-bottom: 16px;">Reset All Game Saves to Default</button>
+    </section>
   </main>
 
+  <!-- 5-Tab Bottom Navigation -->
   <nav id="bottom-nav" class="bottom-nav">
     <button class="nav-item active" data-idx="0"><span class="nav-icon">🏟️</span><span id="nav-lbl-0">Club Hub</span></button>
-    <button class="nav-item" data-idx="1"><span class="nav-icon">📋</span><span id="nav-lbl-1">Squad</span></button>
-    <button class="nav-item" data-idx="2"><span class="nav-icon">✈️</span><span id="nav-lbl-2">Transfers</span></button>
+    <button class="nav-item" data-idx="1"><span class="nav-icon">📋</span><span id="nav-lbl-1">Tactics</span></button>
+    <button class="nav-item" data-idx="2"><span class="nav-icon">💰</span><span id="nav-lbl-2">Market</span></button>
     <button class="nav-item" data-idx="3"><span class="nav-icon">🏆</span><span id="nav-lbl-3">Awards</span></button>
+    <button class="nav-item" data-idx="4"><span class="nav-icon">🛠️</span><span id="nav-lbl-4">Editor</span></button>
   </nav>
 
   <!-- ==================== SHARED 2D LIVE MATCHDAY MODAL ==================== -->
   <div id="match-modal" class="modal-backdrop">
     <div class="modal-box">
       <div class="card-title">
-        <span id="match-comp-title">MATCHDAY ARENA</span>
+        <span id="match-comp-title">MATCHDAY BROADCAST</span>
         <span id="match-clock" class="match-min">0'</span>
       </div>
 
       <div class="scoreboard">
-        <div class="team-col"><div id="sim-home-name" class="team-name">Home</div></div>
+        <div class="team-col">
+          <div id="sim-home-crest"></div>
+          <div id="sim-home-name" class="team-name">Home</div>
+        </div>
         <div class="score-col"><div id="sim-score" class="score-digits">0 - 0</div></div>
-        <div class="team-col"><div id="sim-away-name" class="team-name">Away</div></div>
+        <div class="team-col">
+          <div id="sim-away-crest"></div>
+          <div id="sim-away-name" class="team-name">Away</div>
+        </div>
       </div>
 
       <div class="pitch-box">
@@ -374,29 +556,29 @@
       </div>
 
       <div id="manager-touchline-bar" style="display:none;margin:6px 0;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-          <select id="mgr-live-mentality" style="padding:7px;border-radius:8px;background:#09101f;color:#fff;border:1px solid var(--border-subtle);font-size:11px;">
-            <option value="Balanced">Mentality: Balanced</option>
-            <option value="Attacking">Mentality: All-Out Attack</option>
-            <option value="Possession">Mentality: Possession</option>
-            <option value="Counter-Attack">Mentality: Counter</option>
+        <div class="grid-2">
+          <select id="mgr-live-mentality" style="padding:7px;border-radius:8px;background:#060b16;color:#fff;border:1px solid var(--border-subtle);font-size:11px;">
+            <option value="Balanced">Style: Balanced</option>
+            <option value="Tiki-Taka">Style: Tiki-Taka</option>
+            <option value="Wing Play">Style: Wing Play</option>
+            <option value="Counter-Attack">Style: Counter</option>
           </select>
-          <button id="btn-mgr-quick-sub" class="btn btn-gold btn-sm" style="width:100%;">Make Super-Sub</button>
+          <button id="btn-mgr-quick-sub" class="btn btn-gold btn-sm" style="width:100%;">Send Super-Sub</button>
         </div>
       </div>
 
       <div id="key-moment-box" class="key-moment-card">
         <div id="km-title" style="font-size:12px;font-weight:900;color:var(--accent-gold);margin-bottom:4px;">KEY MOMENT!</div>
         <div id="km-desc" style="font-size:12px;margin-bottom:8px;line-height:1.4;"></div>
-        <div id="km-options" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;"></div>
+        <div id="km-options" class="grid-3"></div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+      <div class="grid-2" style="margin-bottom:8px;">
         <button id="btn-sim-live" class="btn btn-primary btn-sm" style="width:100%;">▶ Live 2D Sim</button>
         <button id="btn-sim-instant" class="btn btn-secondary btn-sm" style="width:100%;">⚡ Instant Sim</button>
       </div>
 
-      <div id="user-match-card" style="display:none;background:#09101f;padding:8px;border-radius:10px;margin-bottom:8px;">
+      <div id="user-match-card" style="display:none;background:#060b16;padding:8px;border-radius:10px;margin-bottom:8px;">
         <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;">
           <span style="color:var(--text-muted);">Your Performance</span>
           <span id="user-motm-badge" style="color:var(--accent-gold);font-weight:800;"></span>
@@ -410,9 +592,9 @@
       </div>
 
       <div id="interview-box" style="display:none;background:#122342;padding:9px;border-radius:10px;margin-bottom:8px;">
-        <div style="font-size:11px;font-weight:800;color:var(--accent-secondary);margin-bottom:6px;">🎙️ Press Question: "How do you rate that display?"</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-          <button class="btn btn-secondary btn-sm interview-btn" data-choice="team">"Credit to the Team"</button>
+        <div style="font-size:11px;font-weight:800;color:var(--accent-secondary);margin-bottom:6px;">🎙️ Post-Match Press: "Thoughts on today's performance?"</div>
+        <div class="grid-2">
+          <button class="btn btn-secondary btn-sm interview-btn" data-choice="team">"Credit to the Coach"</button>
           <button class="btn btn-primary btn-sm interview-btn" data-choice="confident">"I was unstoppable!"</button>
         </div>
       </div>
@@ -420,10 +602,9 @@
       <div id="match-stats-summary" style="font-size:11px;color:var(--accent-secondary);margin-bottom:6px;"></div>
       <div id="commentary-feed" class="commentary-feed">Tap Live 2D Sim to kick off!</div>
 
-      <!-- ALL PLAYERS RATINGS PANEL -->
       <div id="all-ratings-section" style="display:none;margin-top:10px;">
         <div class="card-title"><span>📊 Match Ratings — Every Player</span></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
+        <div class="grid-2" style="margin-bottom:6px;">
           <button id="btn-rtg-home" class="btn btn-primary btn-sm" style="width:100%;">Home XI & Subs</button>
           <button id="btn-rtg-away" class="btn btn-secondary btn-sm" style="width:100%;">Away XI & Subs</button>
         </div>
@@ -437,7 +618,7 @@
   <!-- ==================== TROPHY & BALLON D'OR CELEBRATION MODAL ==================== -->
   <div id="celebration-modal" class="modal-backdrop">
     <div class="modal-box celebration-box">
-      <div class="confetti-strip">✨🎊🎉✨🎊🎉✨</div>
+      <div class="confetti-strip">✨🎊🎉🏆🎉🎊✨</div>
       <div id="cel-icon" class="trophy-bounce">🏆</div>
       <h2 id="cel-title" style="color:var(--accent-gold);font-size:22px;font-weight:900;margin-bottom:6px;">CHAMPIONS!</h2>
       <p id="cel-subtitle" style="font-size:14px;font-weight:700;margin-bottom:6px;"></p>
@@ -449,37 +630,26 @@
   <!-- Custom Footballer Modal -->
   <div id="creator-modal" class="modal-backdrop">
     <div class="modal-box">
-      <h3 style="margin-bottom:10px;color:var(--accent-primary);">Customize Your Footballer</h3>
+      <h3 style="margin-bottom:10px;color:var(--accent-primary);">Customize Your Pro</h3>
       <div class="form-group"><label>Player Name</label><input id="inp-name" type="text" value="Spidey" maxlength="24" /></div>
       <div class="form-group"><label>Age (17 - 24)</label><input id="inp-age" type="number" value="18" min="17" max="24" /></div>
       <div class="form-group">
         <label>Position</label>
         <select id="inp-pos">
-          <option value="ST">ST (Striker)</option>
-          <option value="LW">LW (Left Winger)</option>
-          <option value="RW">RW (Right Winger)</option>
-          <option value="CAM" selected>CAM (Attacking Mid)</option>
-          <option value="CM">CM (Central Mid)</option>
-          <option value="CDM">CDM (Defensive Mid)</option>
-          <option value="CB">CB (Center Back)</option>
-          <option value="LB">LB (Left Back)</option>
-          <option value="RB">RB (Right Back)</option>
-          <option value="GK">GK (Goalkeeper)</option>
+          <option value="ST">ST (Striker)</option><option value="LW">LW (Left Winger)</option><option value="RW">RW (Right Winger)</option>
+          <option value="CAM" selected>CAM (Attacking Mid)</option><option value="CM">CM (Central Mid)</option><option value="CDM">CDM (Defensive Mid)</option>
+          <option value="CB">CB (Center Back)</option><option value="LB">LB (Left Back)</option><option value="RB">RB (Right Back)</option><option value="GK">GK (Goalkeeper)</option>
         </select>
       </div>
       <div class="form-group">
         <label>Nationality</label>
         <select id="inp-nation">
-          <option value="India" selected>India</option>
-          <option value="England">England</option>
-          <option value="Spain">Spain</option>
-          <option value="Argentina">Argentina</option>
-          <option value="Brazil">Brazil</option>
-          <option value="Japan">Japan</option>
+          <option value="India" selected>India</option><option value="England">England</option><option value="Spain">Spain</option>
+          <option value="Argentina">Argentina</option><option value="Brazil">Brazil</option><option value="Japan">Japan</option>
         </select>
       </div>
       <div class="form-group"><label>Starting Club</label><select id="inp-club"></select></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
+      <div class="grid-2" style="margin-top:12px;">
         <button id="btn-cancel-creator" class="btn btn-secondary">Cancel</button>
         <button id="btn-save-creator" class="btn btn-primary">Save Player</button>
       </div>
@@ -491,10 +661,10 @@
     <div class="modal-box">
       <h3 style="margin-bottom:10px;color:var(--accent-secondary);">Select Club to Manage</h3>
       <div class="form-group">
-        <label>Choose Any Real Club (ISL / I-League / Europe)</label>
+        <label>Choose Any Club (ISL / I-League / Europe / Custom)</label>
         <select id="mgr-club-select"></select>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;">
+      <div class="grid-2" style="margin-top:12px;">
         <button id="btn-cancel-club-pick" class="btn btn-secondary">Cancel</button>
         <button id="btn-confirm-club-pick" class="btn btn-primary">Take Charge</button>
       </div>
