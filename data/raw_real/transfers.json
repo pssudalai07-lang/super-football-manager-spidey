@@ -1,0 +1,4 @@
+[
+  { "transfer_id": "TRF_001", "player_id": "PLR_IND_SAHAL", "from_club_id": "CLB_IND_KERALA", "to_club_id": "CLB_IND_MOHUN", "season": "2023-24", "type": "Permanent", "source": "Open Dataset" },
+  { "transfer_id": "TRF_002", "player_id": "PLR_ESP_BELLINGHAM", "from_club_id": "CLB_GER_BAYERN", "to_club_id": "CLB_ESP_REALMADRID", "season": "2023-24", "type": "Permanent", "source": "Open Dataset" }
+]
