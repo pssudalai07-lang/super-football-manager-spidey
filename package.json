@@ -1,0 +1,17 @@
+{
+  "name": "super-football-manager-by-spidey",
+  "version": "1.0.0",
+  "description": "Original Player Career Football Management Game by Spidey",
+  "scripts": {
+    "merge-db": "node scripts/merge-data.js",
+    "build-android": "npm run merge-db && npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/app": "^6.0.1",
+    "@capacitor/core": "^6.1.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.1.2"
+  }
+}
