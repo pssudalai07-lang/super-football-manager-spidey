@@ -1,0 +1,11 @@
+[
+  { "league_id": "LGE_IND_ISL", "name": "Indian Super League", "country": "India", "tier": 1, "reputation": 66, "season": "2025-26", "source": "Open Football Structure" },
+  { "league_id": "LGE_IND_IL1", "name": "I-League", "country": "India", "tier": 2, "reputation": 58, "season": "2025-26", "source": "Open Football Structure" },
+  { "league_id": "LGE_IND_IL2", "name": "I-League 2", "country": "India", "tier": 3, "reputation": 50, "season": "2025-26", "source": "Open Football Structure" },
+  { "league_id": "LGE_ENG_PL", "name": "Premier League", "country": "England", "tier": 1, "reputation": 95, "season": "2025-26", "source": "Open Football Structure" },
+  { "league_id": "LGE_ENG_CH", "name": "EFL Championship", "country": "England", "tier": 2, "reputation": 78, "season": "2025-26", "source": "Open Football Structure" },
+  { "league_id": "LGE_ESP_LL", "name": "La Liga", "country": "Spain", "tier": 1, "reputation": 93, "season": "2025-26", "source": "Open Football Structure" },
+  { "league_id": "LGE_ITA_SA", "name": "Serie A", "country": "Italy", "tier": 1, "reputation": 90, "season": "2025-26", "source": "Open Football Structure" },
+  { "league_id": "LGE_GER_BL", "name": "Bundesliga", "country": "Germany", "tier": 1, "reputation": 90, "season": "2025-26", "source": "Open Football Structure" },
+  { "league_id": "LGE_FRA_L1", "name": "Ligue 1", "country": "France", "tier": 1, "reputation": 86, "season": "2025-26", "source": "Open Football Structure" }
+]
